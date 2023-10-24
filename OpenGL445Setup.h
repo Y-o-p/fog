@@ -17,6 +17,8 @@ that sets viewing parameters for orthographic 3D display.
 
 /* reshape callback handler - defines viewing parameters (projection) */
 
+#pragma once
+
 void my_3d_projection(int width, int height)
 {
 	GLfloat width_bound, height_bound;
