@@ -33,17 +33,19 @@ void Volume::calculate_gradient() {
                 // X-axis gradient calculation
                 Voxel& x_before = get_voxel(x - 1, y, z);
                 Voxel& x_after = get_voxel(x + 1, y, z);
-                v.gradient.x = x_before.value - x_after.value;
+                v.gradient.x = (x_before.value - x_after.value) / 2.0f;
 
                 // Y-axis gradient calculation
                 Voxel& y_before = get_voxel(x, y - 1, z);
                 Voxel& y_after = get_voxel(x, y + 1, z);
-                v.gradient.y = y_before.value - y_after.value;
+                v.gradient.y = (y_before.value - y_after.value) / 2.0f;
 
                 // Z-axis gradient calculation
                 Voxel& z_before = get_voxel(x, y, z - 1);
                 Voxel& z_after = get_voxel(x, y, z + 1);
-                v.gradient.z = z_before.value - z_after.value;
+                v.gradient.z = (z_before.value - z_after.value) / 2.0f;
+
+                v.gradient = glm::normalize(v.gradient);
             }
         }
     }

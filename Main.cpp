@@ -18,9 +18,13 @@ double angle = 0.0;
 int texture_index = 0;
 GLuint my_texture_ID;
 
+void draw_screen() {
+	
+}
+
 void display_func() {
 	int sin_texture_index = (int)((std::cos(texture_index / 30.0f) + 1.0f) / 2.0f * 256.0f);
-	std::cout << sin_texture_index << std::endl;
+	//std::cout << sin_texture_index << std::endl;
 
 	// Clears the screen and draws everything
 	glBindTexture(GL_TEXTURE_2D, my_texture_ID);
@@ -77,6 +81,11 @@ int main(int argc, char ** argv) {
 	}
 
 	auto volume = Volume(std::move(noise), 256, 256, 256);
+
+	// for (Voxel voxel : volume.m_data) {
+	// 	std::cout << voxel.gradient.x << ", " << voxel.gradient.y << ", " << voxel.gradient.z << std::endl;
+	// }
+
 	auto volume_raw = volume.get_raw_values();
 
 	// Initial setup

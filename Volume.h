@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <vector>
 #include <glm/vec3.hpp>
+#include <glm/glm.hpp>
 
 struct Voxel {
     float value;
