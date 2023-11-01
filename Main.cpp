@@ -6,109 +6,92 @@
 #include <cmath>
 
 #include "OpenGL445Setup.h"
-#include "PerlinNoise.h"
 #include "Volume.h"
 
 // Globals
-#define CANVAS_WIDTH 720 /* width of canvas - you may need to change this */
-#define CANVAS_HEIGHT 480 /* height of canvas - you may need to change this */
+#define CANVAS_WIDTH 720 
+#define CANVAS_HEIGHT 480
 
-char canvas_Name[] = "Fog";
-double angle = 0.0;
-int texture_index = 0;
-GLuint my_texture_ID;
+glm::vec3 point_buffer[CANVAS_WIDTH * CANVAS_HEIGHT];
+Volume perlin = create_perlin_volume(256);
 
-void draw_screen() {
-	
+VoxelVertex get_voxel_vertex(glm::ivec3 p) {
+	if (p.x < 0 || p.x > 255 ||
+		p.y < 0 || p.y > 255 ||
+		p.z < 0 || p.z > 255) {
+		return VoxelVertex {
+			0.0f,
+			glm::vec3(0.0f),
+		};
+	}
+
+	return perlin.get_voxel(p.x, p.y, p.z);
+}
+
+Voxel get_nearest_voxel(glm::vec3 p) {
+	glm::ivec3 points[8] = {
+		glm::ivec3(floor(p.x), floor(p.y), floor(p.z)),
+		glm::ivec3(floor(p.x), floor(p.y), ceil(p.z)),
+		glm::ivec3(floor(p.x), ceil(p.y),  floor(p.z)),
+		glm::ivec3(floor(p.x), ceil(p.y),  ceil(p.z)),
+		glm::ivec3(ceil(p.x),  floor(p.y), floor(p.z)),
+		glm::ivec3(ceil(p.x),  floor(p.y), ceil(p.z)),
+		glm::ivec3(ceil(p.x),  ceil(p.y),  floor(p.z)),
+		glm::ivec3(ceil(p.x),  ceil(p.y),  ceil(p.z)),
+	};
+
+	Voxel nearest_voxel;
+	for (int i = 0; i < nearest_voxel.size(); i++) {
+		nearest_voxel[i] = get_voxel_vertex(points[i]);
+	}
+	return nearest_voxel;
+}
+
+void calculate_ray(glm::vec3 start, glm::vec3 dir, int steps = 100, float step = 0.5f) {
+	dir = glm::normalize(dir);
+	for (float t = 0; t < steps; t += step) {
+		glm::vec3 current_pos = start + t * dir;
+		Voxel vox = get_nearest_voxel(current_pos);
+		std::cout << vox[0].value << std::endl;
+	}
+}
+
+void clear_screen() {
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	for (int i = 0; i < CANVAS_WIDTH * CANVAS_HEIGHT; i++) {
+		point_buffer[i] = glm::vec3(0.0f);
+	}
 }
 
 void display_func() {
-	int sin_texture_index = (int)((std::cos(texture_index / 30.0f) + 1.0f) / 2.0f * 256.0f);
-	//std::cout << sin_texture_index << std::endl;
-
-	// Clears the screen and draws everything
-	glBindTexture(GL_TEXTURE_2D, my_texture_ID);
-	glActiveTexture(GL_TEXTURE0);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glLoadIdentity();
-	glTranslated(0.0, 0.0, -10.0);
-	glTranslated(0.0, 0.0, sin_texture_index / 256.0f * 5.0f);
+	clear_screen();
 	
-	float start_x = sin_texture_index % 16;
-	start_x /= 16.0f;
-	float start_y = sin_texture_index / 16;
-	start_y /= 16.0f;
-	float width = 1.0f / 16.0f;
-
-	glBegin(GL_TRIANGLES);
-	glTexCoord2d(start_x,         start_y); 		glVertex3d(-5, -5, 0);
-    glTexCoord2d(start_x + width, start_y); 		glVertex3d(5, -5, 0);
-    glTexCoord2d(start_x + width, start_y + width); glVertex3d(5, 5, 0);
-
-    glTexCoord2d(start_x + width, start_y + width); glVertex3d(5, 5, 0);
-    glTexCoord2d(start_x, 		  start_y + width); glVertex3d(-5, 5, 0);
-    glTexCoord2d(start_x,         start_y); 		glVertex3d(-5, -5, 0);
+	glBegin(GL_POINTS);
+	for (int y = 0; y < CANVAS_HEIGHT; y++) {
+		for (int x = 0; x < CANVAS_WIDTH; x++) {
+			auto color = point_buffer[y * CANVAS_WIDTH + x];
+			glColor3f(color.x, color.y, color.z);
+			glVertex2i(x, y);
+		}
+	}
 	glEnd();
 	glFlush();
 }
 
-void rotate_cube(int ID) {
-	texture_index++;
-	display_func();
-	glutTimerFunc(50, rotate_cube, 1);
-}
-
 int main(int argc, char ** argv) {
-	// Create perlin noise
-	const siv::PerlinNoise perlin{ 123456u };
-	auto noise = std::vector<Voxel>(256 * 256 * 256);
-	for (int yy = 0; yy < 16; yy++) {
-		for (int xx = 0; xx < 16; xx++) {
-			int index_1 = yy * 256 * 4096 + xx * 256;
 
-			for (int y = 0; y < 256; y++) {
-				for (int x = 0; x < 256; x++) {
-					int index_2 = index_1 + (y * 4096 + x);
-					noise[index_2] = Voxel {
-						(float)perlin.noise3D_01(x * 0.05f, y * 0.05f, (yy * 16 + xx) * 0.05f),
-						glm::vec3(0, 0, 0),
-					};
-					//std::cout << i << ", " << j << ", " << k << " | " << noise[(i * 256 + j) * 256 + k] << std::endl;
-				}
-			}
-		}
-	}
-
-	auto volume = Volume(std::move(noise), 256, 256, 256);
-
-	// for (Voxel voxel : volume.m_data) {
-	// 	std::cout << voxel.gradient.x << ", " << voxel.gradient.y << ", " << voxel.gradient.z << std::endl;
-	// }
-
-	auto volume_raw = volume.get_raw_values();
+	calculate_ray(glm::vec3(0), glm::vec3(1, 1, 1));
 
 	// Initial setup
 	glutInit(&argc, argv);
-	my_setup(CANVAS_WIDTH, CANVAS_HEIGHT, canvas_Name);
+	my_setup(CANVAS_WIDTH, CANVAS_HEIGHT, "Fog");
 	
 	// Set up the callbacks
 	display_func();
 	glutDisplayFunc(display_func);
-	glutTimerFunc(50, rotate_cube, 1);
-	// glutKeyboardFunc(keyboard_func);
-
-	// Set up textures
-	glEnable(GL_TEXTURE_2D);
-	glGenTextures(1, &my_texture_ID);
-
-	glBindTexture(GL_TEXTURE_2D, my_texture_ID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 4096, 4096, 0, GL_RED, GL_FLOAT, volume_raw.data());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	// Start the main loop
-	std::cout << "Any Key Click Will Start" << std::endl;
 	glutMainLoop();
 	return 0;
 }
