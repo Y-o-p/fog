@@ -12,10 +12,10 @@ struct VoxelVertex {
     glm::vec3 gradient;
 };
 
-using Voxel = std::array<VoxelVertex, 8>;
-// struct Voxel {
-//     VoxelVertex a, b, c, d, e, f, g, h;
-// };
+struct Voxel {
+    glm::ivec3 position;
+    std::array<VoxelVertex, 8> data;
+};
 
 class Volume {
 public:
