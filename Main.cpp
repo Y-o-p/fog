@@ -15,7 +15,7 @@
 using namespace glm;
 
 vec3 point_buffer[CANVAS_WIDTH * CANVAS_HEIGHT];
-Volume perlin = create_perlin_volume(256);
+Volume<256, 256, 256> perlin = create_perlin_volume<256, 256, 256>();
 
 enum TETRA {
 	A = 0b111,
@@ -24,7 +24,6 @@ enum TETRA {
 	D = 0b000,
 	E = 0b010,
 	F = 0b110,
-	//F = 0b100,
 };
 
 constexpr ivec3 VERTICES[8] = {
@@ -59,7 +58,7 @@ vec4 get_bary_coords(const vec3& p, const vec3& a, const vec3& b, const vec3& c,
 	return baries;
 }
 
-VoxelVertex get_voxel_vertex(const ivec3& p) {
+constexpr VoxelVertex get_voxel_vertex(const ivec3& p) {
 	if (p.x < 0 || p.x > 255 ||
 		p.y < 0 || p.y > 255 ||
 		p.z < 0 || p.z > 255) {
@@ -89,13 +88,16 @@ Voxel get_nearest_voxel(vec3 p) {
 	for (int i = 0; i < nearest_voxel.data.size(); i++) {
 		//std::cout << "POINT " << points[i].x << ", " << points[i].y << ", " << points[i].z << std::endl;
 		nearest_voxel.data[i] = get_voxel_vertex(points[i]);
+		//std::cout << nearest_voxel.data[i].value << std::endl;
 	}
 	nearest_voxel.position = std::move(points[0]);
 	return nearest_voxel;
 }
 
-void calculate_ray(vec3 start, vec3 dir, int steps = 100, float step = 0.5f) {
+float calculate_ray(vec3 start, vec3 dir, int steps = 100, float step = 0.5f) {
 	dir = normalize(dir);
+	float color = 0.0f;
+	
 	for (float t = 0; t < steps; t += step) {
 		// Get the voxel that we're inside of
 		vec3 current_pos = start + t * dir;
@@ -147,8 +149,24 @@ void calculate_ray(vec3 start, vec3 dir, int steps = 100, float step = 0.5f) {
 		
 		// Do barycentric interpolation
 		vec4 baries = get_bary_coords(normalized_pos, VERTICES[a], VERTICES[b], VERTICES[c], VERTICES[d]);
-		std::cout << baries.x << ", " << baries.y << ", " << baries.z << ", " << baries.w << std::endl;
+		//std::cout << baries.x << ", " << baries.y << ", " << baries.z << ", " << baries.w << std::endl;
+	
+		// Interpolate vertex attributes
+		float value = vox.data[a].value * baries.x +
+					  vox.data[b].value * baries.y +
+					  vox.data[c].value * baries.z +
+					  vox.data[d].value * baries.w;
+		vec3 gradient = vox.data[a].gradient * baries.x +
+					    vox.data[b].gradient * baries.y +
+					  	vox.data[c].gradient * baries.z +
+					  	vox.data[d].gradient * baries.w;
+		
+		// Lighting
+		color += value;
 	}
+	color /= (float)steps;
+
+	return color;
 }
 
 void clear_screen() {
@@ -165,13 +183,20 @@ void display_func() {
 	glBegin(GL_POINTS);
 	for (int y = 0; y < CANVAS_HEIGHT; y++) {
 		for (int x = 0; x < CANVAS_WIDTH; x++) {
-			calculate_ray(vec3(x, y, -25), vec3(2, 3, -1), 100, 1.0f);
-			
-			auto color = point_buffer[y * CANVAS_WIDTH + x];
+			auto &color = point_buffer[y * CANVAS_WIDTH + x];
+			color = vec3(calculate_ray(
+				vec3(x - CANVAS_WIDTH / 2.0f - 10, y - CANVAS_HEIGHT / 2.0f - 10, -10),
+				vec3(1, 1, 1),
+				100,
+				1.0f
+			));
+			//std::cout << color.x << ", " << color.y << ", " << color.z << std::endl;
+
 			glColor3f(color.x, color.y, color.z);
 			glVertex2i(x, y);
 		}
 	}
+	std::cout << "Done" << std::endl;
 	glEnd();
 	glFlush();
 }
