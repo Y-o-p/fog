@@ -7,15 +7,20 @@
 
 #include "OpenGL445Setup.h"
 #include "Volume.h"
+#include "ViewingPlane.h"
 
 // Globals
-#define CANVAS_WIDTH 720 
-#define CANVAS_HEIGHT 480
+#define CANVAS_WIDTH 400 
+#define CANVAS_HEIGHT 400
+#define CENTER_X CANVAS_WIDTH / 2
+#define CENTER_Y CANVAS_HEIGHT / 2
+#define CUBE_SIZE 128
 
 using namespace glm;
 
 vec3 point_buffer[CANVAS_WIDTH * CANVAS_HEIGHT];
-Volume<256, 256, 256> perlin = create_perlin_volume<256, 256, 256>();
+auto perlin = create_perlin_volume<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE>();
+auto viewing_plane = ViewingPlane<CANVAS_WIDTH, CANVAS_HEIGHT>();
 
 enum TETRA {
 	A = 0b111,
@@ -59,9 +64,9 @@ vec4 get_bary_coords(const vec3& p, const vec3& a, const vec3& b, const vec3& c,
 }
 
 constexpr VoxelVertex get_voxel_vertex(const ivec3& p) {
-	if (p.x < 0 || p.x > 255 ||
-		p.y < 0 || p.y > 255 ||
-		p.z < 0 || p.z > 255) {
+	if (p.x < 0 || p.x > CUBE_SIZE - 1 ||
+		p.y < 0 || p.y > CUBE_SIZE - 1 ||
+		p.z < 0 || p.z > CUBE_SIZE - 1) {
 		return VoxelVertex {
 			0.0f,
 			vec3(0.0f),
@@ -86,9 +91,7 @@ Voxel get_nearest_voxel(vec3 p) {
 
 	Voxel nearest_voxel;
 	for (int i = 0; i < nearest_voxel.data.size(); i++) {
-		//std::cout << "POINT " << points[i].x << ", " << points[i].y << ", " << points[i].z << std::endl;
 		nearest_voxel.data[i] = get_voxel_vertex(points[i]);
-		//std::cout << nearest_voxel.data[i].value << std::endl;
 	}
 	nearest_voxel.position = std::move(points[0]);
 	return nearest_voxel;
@@ -164,7 +167,7 @@ float calculate_ray(vec3 start, vec3 dir, int steps = 100, float step = 0.5f) {
 		// Lighting
 		color += value;
 	}
-	color /= (float)steps;
+	color /= (float)CUBE_SIZE;
 
 	return color;
 }
@@ -178,16 +181,23 @@ void clear_screen() {
 }
 
 void display_func() {
-	clear_screen();
+	std::cout << "Starting rendering..." << std::endl;
 	
+	auto plane = viewing_plane.get_plane();
+	auto direction = viewing_plane.get_direction();
+	std::cout << direction.x << ", " << direction.y << ", " << direction.z << "\n";
+
+	clear_screen();
 	glBegin(GL_POINTS);
 	for (int y = 0; y < CANVAS_HEIGHT; y++) {
 		for (int x = 0; x < CANVAS_WIDTH; x++) {
-			auto &color = point_buffer[y * CANVAS_WIDTH + x];
+			auto index = y * CANVAS_WIDTH + x;
+			auto &color = point_buffer[index];
+			auto point = plane[index];
 			color = vec3(calculate_ray(
-				vec3(x - CANVAS_WIDTH / 2.0f - 10, y - CANVAS_HEIGHT / 2.0f - 10, -10),
-				vec3(1, 1, 1),
-				100,
+				point,
+				direction,
+				500,
 				1.0f
 			));
 			//std::cout << color.x << ", " << color.y << ", " << color.z << std::endl;
@@ -196,21 +206,26 @@ void display_func() {
 			glVertex2i(x, y);
 		}
 	}
-	std::cout << "Done" << std::endl;
 	glEnd();
 	glFlush();
+
+	std::cout << "Done" << std::endl;
+}
+
+void update_func(int ID) {
+	display_func();
 }
 
 int main(int argc, char ** argv) {
-	//calculate_ray(vec3(0, 0, 0), vec3(1, 0, 1), 100, 1.0f);
+	viewing_plane.set_orientation(glm::vec3(-128, 128, -128), glm::vec3(20, 45, 0));
 	
 	// Initial setup
 	glutInit(&argc, argv);
 	my_setup(CANVAS_WIDTH, CANVAS_HEIGHT, "Fog");
 	
 	// Set up the callbacks
-	display_func();
 	glutDisplayFunc(display_func);
+	//glutTimerFunc(50, update_func, 0);
 
 	// Start the main loop
 	glutMainLoop();
