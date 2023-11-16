@@ -97,6 +97,27 @@ Voxel get_nearest_voxel(vec3 p) {
 	return nearest_voxel;
 }
 
+float calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, vec3 light_pos) {
+	// Ambient lighting calculation
+	const float ambient_light = 1.0f;
+	const float ambient = value * ambient_light;
+
+	// Diffuse lighting calculation
+	const float diffuse_light = 1.0f;
+	const vec3 light_vector = glm::normalize(light_pos - pos);
+	const float diffuse = diffuse_light * glm::dot(light_vector, gradient);
+
+	// Specular lighting calculation
+	const float specular_light = 1.0f;
+	const float shinniness = 1.0f;
+	const vec3 viewer_vector = glm::normalize(viewer_pos);
+	const vec3 halfway_vector = glm::normalize((light_vector + viewer_vector) / 2.0f);
+	const float specular = specular_light * glm::pow(glm::dot(halfway_vector, gradient), shinniness);
+
+	// Phong
+	return clamp(ambient + diffuse + specular, 0.0f, 1.0f);
+}
+
 float calculate_ray(vec3 start, vec3 dir, int steps = 100, float step = 0.5f) {
 	dir = normalize(dir);
 	float color = 0.0f;
@@ -165,11 +186,14 @@ float calculate_ray(vec3 start, vec3 dir, int steps = 100, float step = 0.5f) {
 					  	vox.data[d].gradient * baries.w;
 		
 		// Lighting
-		color += value;
+		if (gradient != vec3(0)) {
+			color += calculate_lighting(value, gradient, current_pos, start, glm::vec3(0.0f, 0.0f, 0.0f));
+		}
 	}
+
 	color /= (float)CUBE_SIZE;
 
-	return color;
+	return clamp(color, 0.0f, 1.0f);
 }
 
 void clear_screen() {
