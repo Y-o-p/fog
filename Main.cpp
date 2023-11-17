@@ -98,7 +98,7 @@ Voxel get_nearest_voxel(vec3 p) {
 }
 
 float calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, vec3 light_pos) {
-	// Ambient lighting calculation
+	// Ambient lighting calculation  
 	const float ambient_light = 1.0f;
 	const float ambient = value * ambient_light;
 
@@ -192,8 +192,9 @@ float calculate_ray(vec3 start, vec3 dir, int steps = 100, float step = 0.5f) {
 	}
 
 	color /= (float)CUBE_SIZE;
+	color = clamp(color, 0.0f, 1.0f);
 
-	return clamp(color, 0.0f, 1.0f);
+	return color;
 }
 
 void clear_screen() {
@@ -211,6 +212,7 @@ void display_func() {
 	auto direction = viewing_plane.get_direction();
 	std::cout << direction.x << ", " << direction.y << ", " << direction.z << "\n";
 
+	vec3 background_color = normalize(vec3(0, 204, 255));
 	clear_screen();
 	glBegin(GL_POINTS);
 	for (int y = 0; y < CANVAS_HEIGHT; y++) {
@@ -218,14 +220,13 @@ void display_func() {
 			auto index = y * CANVAS_WIDTH + x;
 			auto &color = point_buffer[index];
 			auto point = plane[index];
-			color = vec3(calculate_ray(
+			float ray_value = calculate_ray(
 				point,
 				direction,
 				500,
 				1.0f
-			));
-			//std::cout << color.x << ", " << color.y << ", " << color.z << std::endl;
-
+			);
+			color = vec3(ray_value) + (1.0f - ray_value) * background_color;
 			glColor3f(color.x, color.y, color.z);
 			glVertex2i(x, y);
 		}
