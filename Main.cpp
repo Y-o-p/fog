@@ -8,6 +8,7 @@
 #include "OpenGL445Setup.h"
 #include "Volume.h"
 #include "ViewingPlane.h"
+#include "Util.h"
 
 // Globals
 #define CANVAS_WIDTH 400 
@@ -115,7 +116,7 @@ float calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, 
 	const float specular = specular_light * glm::pow(glm::dot(halfway_vector, gradient), shinniness);
 
 	// Phong
-	return clamp(ambient + diffuse + specular, 0.0f, 1.0f);
+	return clamp(ambient + diffuse + specular, 0.0f, 1.0f) / 100.0f;
 }
 
 float calculate_ray(vec3 start, vec3 dir, int steps = 100, float step = 0.5f) {
@@ -188,11 +189,12 @@ float calculate_ray(vec3 start, vec3 dir, int steps = 100, float step = 0.5f) {
 		// Lighting
 		if (gradient != vec3(0)) {
 			color += calculate_lighting(value, gradient, current_pos, start, glm::vec3(0.0f, 0.0f, 0.0f));
+			if (color >= 1.0f) {
+				color = 1.0f;
+				break;
+			}
 		}
 	}
-
-	color /= (float)CUBE_SIZE;
-	color = clamp(color, 0.0f, 1.0f);
 
 	return color;
 }
@@ -214,6 +216,8 @@ void display_func() {
 
 	vec3 background_color = normalize(vec3(0, 204, 255));
 	clear_screen();
+	auto timer = Timer();
+	timer.start();
 	glBegin(GL_POINTS);
 	for (int y = 0; y < CANVAS_HEIGHT; y++) {
 		for (int x = 0; x < CANVAS_WIDTH; x++) {
@@ -231,6 +235,8 @@ void display_func() {
 			glVertex2i(x, y);
 		}
 	}
+	double duration = timer.end();
+	std::printf("That took %f seconds\n", duration / 1000.0);
 	glEnd();
 	glFlush();
 
