@@ -1,5 +1,8 @@
 // g++ Main.cpp -lGL -lGLEW -lGLU -ldl -lglut
 
+#include <fstream>
+#include <sstream>
+
 #include "VolumeRenderer.h"
 
 // Globals
@@ -12,6 +15,9 @@ using namespace glm;
  
 auto viewing_plane = ViewingPlane<CANVAS_WIDTH, CANVAS_HEIGHT>();
 auto renderer = VolumeRenderer<CANVAS_WIDTH, CANVAS_HEIGHT>();
+unsigned int vao_id;
+unsigned int canvas_points_id;
+unsigned int shader_id;
 
 void clear_screen() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -27,7 +33,9 @@ void display_func() {
 	timer.start();
 	
 	// Do the rendering !! 
-	renderer.draw(viewing_plane);
+	//renderer.draw(viewing_plane);
+	glBindVertexArray(vao_id);
+	glDrawArrays(GL_POINTS, 0, CANVAS_WIDTH * CANVAS_HEIGHT);
 
 	double duration = timer.end();
 	std::printf("That took %f seconds\n", duration / 1000.0);
@@ -36,20 +44,98 @@ void display_func() {
 	std::cout << "Done" << std::endl;
 }
 
-void update_func(int ID) {
-	display_func();
+std::stringstream get_file_data(const char* filename) {
+	auto file = std::ifstream(filename, std::ios::out);
+	std::stringstream file_data;
+	file_data << file.rdbuf();
+	return file_data;
+}
+
+void get_shader_errors(unsigned int shader) {
+	GLint success;
+	GLchar info_log[512];
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		std::cerr << info_log << std::endl;
+	}
+}
+
+void init_shaders() {
+	// Initialize vertex shader
+	std::string vertex_shader = get_file_data("shader.vert").str();
+	const char* vertex_shader_data = vertex_shader.c_str();
+	unsigned int vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertex_shader_id, 1, &vertex_shader_data, NULL);
+
+	// Initalize fragment shader
+	std::string fragment_shader = get_file_data("shader.frag").str();
+	const char* fragment_shader_data = fragment_shader.c_str();
+	//std::cout << fragment_shader_data << std::endl;
+	unsigned int fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragment_shader_id, 1, &fragment_shader_data, NULL);
+
+	// Link and compile shaders
+	glCompileShader(vertex_shader_id);
+	get_shader_errors(vertex_shader_id);
+	glCompileShader(fragment_shader_id);
+	get_shader_errors(fragment_shader_id);
+	shader_id = glCreateProgram();
+	glAttachShader(shader_id, vertex_shader_id);
+	glAttachShader(shader_id, fragment_shader_id);
+	glLinkProgram(shader_id);
+	
+	// Check if linking succeeded
+	GLint success;
+	GLchar info_log[512];
+	glGetProgramiv(shader_id, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shader_id, 512, NULL, info_log);
+		std::cerr << info_log << std::endl;
+	}
+
+	glUseProgram(shader_id);
+	glDeleteShader(vertex_shader_id);
+	glDeleteShader(fragment_shader_id);
+}
+
+void init_vertex_attributes() {
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+	glEnableVertexAttribArray(0);
+}
+
+void buffer_canvas_points() {
+	// Create VAO
+	glGenVertexArrays(1, &vao_id);
+	glBindVertexArray(vao_id);
+	
+	// Crate point data
+	vec2 canvas_points[CANVAS_WIDTH * CANVAS_HEIGHT];
+	for (int y = 0; y < CANVAS_HEIGHT; y++) {
+		for (int x = 0; x < CANVAS_WIDTH; x++) {
+			canvas_points[y * CANVAS_WIDTH + x] = vec2(
+				(float)x / (float)CANVAS_WIDTH * 2.0f - 1.0f,
+				(float)y / (float)CANVAS_HEIGHT * 2.0f - 1.0f
+			);
+		}
+	}
+	glGenBuffers(1, &canvas_points_id);
+	glBindBuffer(GL_ARRAY_BUFFER, canvas_points_id);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(canvas_points), canvas_points, GL_STATIC_DRAW);
 }
 
 int main(int argc, char ** argv) {
-	viewing_plane.set_orientation(glm::vec3(-128, 128, -128), glm::vec3(20, 45, 0));
-	
 	// Initial setup
 	glutInit(&argc, argv);
 	my_setup(CANVAS_WIDTH, CANVAS_HEIGHT, "Fog");
 	
 	// Set up the callbacks
 	glutDisplayFunc(display_func);
-	//glutTimerFunc(50, update_func, 0);
+	
+	// Variable setup
+	viewing_plane.set_orientation(glm::vec3(-128, 128, -128), glm::vec3(20, 45, 0));
+	buffer_canvas_points();
+	init_vertex_attributes();
+	init_shaders();
 
 	// Start the main loop
 	glutMainLoop();

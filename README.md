@@ -15,9 +15,10 @@ This is a project I created to learn about [Volume Ray Casting](https://en.wikip
 - ~~Create a viewing plane~~
 - ~~Implement Blinn-Phong lighting~~
 - ~~Performance benchmarking~~
-- More advanced compositing
 - Save images
 - Ray intersection
 - Perspective projecting
 - Trilinear interpolation
 - Nearest neighbor interpolation
+- Vertex and fragment shaders with modern OpenGL support
+- Compute shaders for calculating ray math
