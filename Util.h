@@ -9,6 +9,12 @@ void print(glm::vec3 v) {
     std::cout << v.x << ", " << v.y << ", " << v.z << "\n";
 }
 
+void print(glm::mat4 m) {
+    for (int i = 0; i < 4; i++) {
+        std::cout << m[0][i] << ", " << m[1][i] << ", " << m[2][i] << ", " << m[3][i] << "\n";
+    }
+}
+
 class Timer {
 public:
     void start() {

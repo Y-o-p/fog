@@ -45,6 +45,10 @@ public:
         return m_data[z * w * h + y * h + x];
     }
 
+    const VoxelVertex *const get_data() const {
+        return m_data.data();
+    } 
+
     constexpr void calculate_gradient() {
         for (int z = 1; z < m_depth - 1; z++) {
             for (int y = 1; y < m_height - 1; y++) {

@@ -3,6 +3,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include "VolumeRenderer.h"
 
 // Globals
@@ -56,6 +58,7 @@ void get_shader_errors(unsigned int shader) {
 	GLchar info_log[512];
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 	if (!success) {
+		glGetShaderInfoLog(shader, 512, NULL, info_log);
 		std::cerr << info_log << std::endl;
 	}
 }
@@ -96,11 +99,36 @@ void init_shaders() {
 	glUseProgram(shader_id);
 	glDeleteShader(vertex_shader_id);
 	glDeleteShader(fragment_shader_id);
+
+	// Uniform stuff
+	int view_location = glGetUniformLocation(shader_id, "view");
+	const float* view_mat = (const float*)value_ptr(viewing_plane.get_mat());
+	for (int i = 0; i < 16; i++) {
+		std::cout << view_mat[i] << std::endl;
+	}
+	glUniformMatrix4fv(view_location, 1, GL_TRUE, view_mat);
+
+	int volume_size_location = glGetUniformLocation(shader_id, "volume_size");
+	glUniform1ui(volume_size_location, CUBE_SIZE);
+
+	int direction_location = glGetUniformLocation(shader_id, "direction_location");
+	vec3 view_direction = viewing_plane.get_direction();
+	glUniform3f(volume_size_location, view_direction.x, view_direction.y, view_direction.z);
 }
 
 void init_vertex_attributes() {
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
 	glEnableVertexAttribArray(0);
+}
+
+void buffer_volume_data() {
+	Volume<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE> perlin = create_perlin_volume<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE>();
+	GLuint volume_id;
+	glGenBuffers(1, &volume_id);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, volume_id);
+	constexpr unsigned int VOLUME_SIZE = CUBE_SIZE * CUBE_SIZE * CUBE_SIZE * sizeof(VoxelVertex);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, VOLUME_SIZE, perlin.get_data(), GL_STATIC_READ);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, volume_id);
 }
 
 void buffer_canvas_points() {
@@ -136,6 +164,7 @@ int main(int argc, char ** argv) {
 	buffer_canvas_points();
 	init_vertex_attributes();
 	init_shaders();
+	buffer_volume_data();
 
 	// Start the main loop
 	glutMainLoop();

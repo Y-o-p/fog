@@ -44,11 +44,15 @@ public:
         return oriented_data;
     }
 
+    constexpr glm::mat4 get_mat() const {
+        return m_mat;
+    }
+
     constexpr glm::vec3 get_direction() const {
         auto a = glm::vec3(m_mat * glm::vec4(m_data[0], 1.0f)); // Origin
         auto b = glm::vec3(m_mat * glm::vec4(m_data[w - 1], 1.0f)); // Rightmost point
         auto c = glm::vec3(m_mat * glm::vec4(m_data[w * (h - 1)], 1.0f)); // Upmost point
-        return glm::cross(glm::vec3(b - a), glm::vec3(c - a));
+        return glm::normalize(glm::cross(glm::vec3(b - a), glm::vec3(c - a)));
     }
 
 private:
