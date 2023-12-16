@@ -18,6 +18,27 @@ uniform vec3 direction;
 // Outs
 out vec4 color;
 
+float calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, vec3 light_pos) {
+    // Ambient lighting calculation  
+    const float ambient_light = 1.0f;
+    const float ambient = value * ambient_light;
+
+    // Diffuse lighting calculation
+    const float diffuse_light = 1.0f;
+    const vec3 light_vector = normalize(light_pos - pos);
+    const float diffuse = diffuse_light * dot(light_vector, gradient);
+
+    // Specular lighting calculation
+    const float specular_light = 1.0f;
+    const float shinniness = 1.0f;
+    const vec3 viewer_vector = normalize(viewer_pos);
+    const vec3 halfway_vector = normalize((light_vector + viewer_vector) / 2.0f);
+    const float specular = specular_light * pow(dot(halfway_vector, gradient), shinniness);
+
+    // Phong
+    return clamp(ambient + diffuse + specular, 0.0f, 1.0f) / 100.0f;
+}
+
 void get_voxel(in ivec3 p, out vec4 v) {
     v = data[p.z * volume_size * volume_size + p.y * volume_size + p.x];
 }
@@ -41,11 +62,9 @@ void calculate_ray(in vec3 start, in vec3 dir, in int steps, in float step_size,
     for (float t = 0.0f; t < steps; t += step_size) {
         vec4 voxel;
         get_nearest_voxel(current_pos, voxel);
-        value += voxel.x;
+        value += calculate_lighting(voxel.x, voxel.yzw, current_pos, world_pos.xyz, vec3(0.0f, 200.0f, 0.0f));
         current_pos += movement;
     }
-
-    value /= volume_size / 1.5f;
 }
 
 void main() {
