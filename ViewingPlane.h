@@ -32,6 +32,8 @@ public:
         m_mat = glm::rotate(m_mat, glm::radians(rotation.z), glm::vec3(0, 0, 1));
         m_mat = glm::rotate(m_mat, glm::radians(rotation.y), glm::vec3(0, 1, 0));
         m_mat = glm::rotate(m_mat, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+        //m_mat = glm::transpose(m_mat);
+        //m_mat = glm::translate(m_mat, -position);
         //std::cout << mat[0][0] << ", " << mat[2][2] << std::endl;
         //mat = glm::translate(mat, position);
     }

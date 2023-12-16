@@ -9,7 +9,7 @@ struct VoxelVertex {
 };
 
 layout(std430, binding = 0) buffer volume {
-    VoxelVertex data[];
+    vec4 data[];
 };
 
 uniform uint volume_size; 
@@ -18,28 +18,34 @@ uniform vec3 direction;
 // Outs
 out vec4 color;
 
-void get_nearest_voxel(in vec3 p, out VoxelVertex v) {
+void get_voxel(in ivec3 p, out vec4 v) {
+    v = data[p.z * volume_size * volume_size + p.y * volume_size + p.x];
+}
+
+void get_nearest_voxel(in vec3 p, out vec4 v) {
     ivec3 p_floor = ivec3(floor(p));
     if (p_floor.x < 0 || p_floor.x >= volume_size ||
         p_floor.y < 0 || p_floor.y >= volume_size ||
         p_floor.z < 0 || p_floor.z >= volume_size) {
-        v = VoxelVertex(0.0f, vec3(0.0f));
+        v = vec4(0.0f);
     }
-    v = data[p_floor.z * volume_size * volume_size + p_floor.y * volume_size + p_floor.x];
+    else {
+        get_voxel(p_floor, v);
+    }
 }
 
 void calculate_ray(in vec3 start, in vec3 dir, in int steps, in float step_size, out float value) {
     value = 0.0f;
-    vec3 movement = step_size * dir;
+    vec3 movement = dir * step_size;
     vec3 current_pos = start;
     for (float t = 0.0f; t < steps; t += step_size) {
-        VoxelVertex voxel;
+        vec4 voxel;
         get_nearest_voxel(current_pos, voxel);
-        value += voxel.value;
+        value += voxel.x;
         current_pos += movement;
     }
 
-    value /= 500.0f;
+    value /= volume_size / 1.5f;
 }
 
 void main() {

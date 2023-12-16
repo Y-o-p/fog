@@ -12,6 +12,8 @@
 #define CANVAS_HEIGHT 400
 #define CENTER_X CANVAS_WIDTH / 2
 #define CENTER_Y CANVAS_HEIGHT / 2
+#define FPS 60.0
+#define UPDATE_RATE 1000.0 / FPS
 
 using namespace glm;
  
@@ -20,6 +22,13 @@ auto renderer = VolumeRenderer<CANVAS_WIDTH, CANVAS_HEIGHT>();
 unsigned int vao_id;
 unsigned int canvas_points_id;
 unsigned int shader_id;
+int volume_size_location;
+int direction_location;
+
+float time_elapsed = 0.0f;
+float rotation_x = 0.0f;
+float rotation_y = 0.0f;
+float rotation_z = 0.0f;
 
 void clear_screen() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -28,22 +37,13 @@ void clear_screen() {
 }
 
 void display_func() {
-	std::cout << "Starting rendering..." << std::endl;
-
 	clear_screen();
-	auto timer = Timer();
-	timer.start();
 	
 	// Do the rendering !! 
-	//renderer.draw(viewing_plane);
 	glBindVertexArray(vao_id);
 	glDrawArrays(GL_POINTS, 0, CANVAS_WIDTH * CANVAS_HEIGHT);
-
-	double duration = timer.end();
-	std::printf("That took %f seconds\n", duration / 1000.0);
+	
 	glFlush();
-
-	std::cout << "Done" << std::endl;
 }
 
 std::stringstream get_file_data(const char* filename) {
@@ -99,21 +99,22 @@ void init_shaders() {
 	glUseProgram(shader_id);
 	glDeleteShader(vertex_shader_id);
 	glDeleteShader(fragment_shader_id);
+}
 
-	// Uniform stuff
+void update_uniforms() {
 	int view_location = glGetUniformLocation(shader_id, "view");
 	const float* view_mat = (const float*)value_ptr(viewing_plane.get_mat());
-	for (int i = 0; i < 16; i++) {
-		std::cout << view_mat[i] << std::endl;
-	}
+	// for (int i = 0; i < 16; i++) {
+	// 	std::cout << view_mat[i] << std::endl;
+	// }
 	glUniformMatrix4fv(view_location, 1, GL_TRUE, view_mat);
 
-	int volume_size_location = glGetUniformLocation(shader_id, "volume_size");
+	volume_size_location = glGetUniformLocation(shader_id, "volume_size");
 	glUniform1ui(volume_size_location, CUBE_SIZE);
 
-	int direction_location = glGetUniformLocation(shader_id, "direction_location");
+	direction_location = glGetUniformLocation(shader_id, "direction");
 	vec3 view_direction = viewing_plane.get_direction();
-	glUniform3f(volume_size_location, view_direction.x, view_direction.y, view_direction.z);
+	glUniform3f(direction_location, view_direction.x, view_direction.y, view_direction.z);
 }
 
 void init_vertex_attributes() {
@@ -151,6 +152,23 @@ void buffer_canvas_points() {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(canvas_points), canvas_points, GL_STATIC_DRAW);
 }
 
+auto timer = Timer();
+void update(int ID) {
+	timer.start();
+	time_elapsed += UPDATE_RATE / 1000.0;
+	rotation_x = cos(radians(time_elapsed * 30.0)) * 20.0;
+	rotation_y = sin(radians(time_elapsed * 30.0)) * 20.0;
+
+	
+	viewing_plane.set_orientation(glm::vec3(64.0f, 64.0f, -128.0f), glm::vec3(rotation_x, rotation_y, 0));
+	update_uniforms();
+
+	display_func();
+	glutTimerFunc(UPDATE_RATE, update, 0);
+	double duration = timer.end();
+	std::printf("%fms | %f FPS\r", duration, 1.0 / (duration / 1000.0));
+}
+
 int main(int argc, char ** argv) {
 	// Initial setup
 	glutInit(&argc, argv);
@@ -158,13 +176,17 @@ int main(int argc, char ** argv) {
 	
 	// Set up the callbacks
 	glutDisplayFunc(display_func);
+	glutTimerFunc(UPDATE_RATE, update, 0);
 	
 	// Variable setup
-	viewing_plane.set_orientation(glm::vec3(-128, 128, -128), glm::vec3(20, 45, 0));
+	//viewing_plane.set_orientation(glm::vec3(-128, 128, -128), glm::vec3(20, 45, 0));
+	viewing_plane.set_orientation(glm::vec3(64, 64, -128), glm::vec3(10, 10, 0));
 	buffer_canvas_points();
 	init_vertex_attributes();
 	init_shaders();
+	update_uniforms();
 	buffer_volume_data();
+
 
 	// Start the main loop
 	glutMainLoop();
