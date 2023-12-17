@@ -15,10 +15,12 @@ This is a project I created to learn about [Volume Ray Casting](https://en.wikip
 - ~~Create a viewing plane~~
 - ~~Implement Blinn-Phong lighting~~
 - ~~Performance benchmarking~~
+- ~~Vertex and fragment shaders with modern OpenGL support~~
+- Barycentric Interpolation in shaders
+- Expand the perlin noise cube
+- Get four dimensional perlin noise data
 - Save images
 - Ray intersection
 - Perspective projecting
 - Trilinear interpolation
 - Nearest neighbor interpolation
-- Vertex and fragment shaders with modern OpenGL support
-- Compute shaders for calculating ray math

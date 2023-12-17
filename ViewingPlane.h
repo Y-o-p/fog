@@ -7,7 +7,7 @@
 #include <iostream>
 
 using namespace glm;
-
+// TODO put these definitions in CPP
 class ViewingPlane {
 public:
     ViewingPlane(vec3 position = vec3(0), vec3 rotation = vec3(0), int width = 400, int height = 400): 
@@ -15,7 +15,11 @@ public:
         m_data.resize(m_width * m_height);
         for (int y = 0; y < m_height; y++) {
             for (int x = 0; x < m_width; x++) {
-                m_data[y * m_width + x] = vec3(x - (float)m_height / 2, y - (float)m_height / 2, 0);
+                m_data[y * m_width + x] = vec3(
+                    (float)x / (float)m_height * 2.0f - 1.0f,
+                    (float)y / (float)m_height * 2.0f - 1.0f,
+                    0
+                );
             }
         }
         std::cout << "Constructed with " << m_data.size() << std::endl;

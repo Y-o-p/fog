@@ -20,14 +20,9 @@
 
 using namespace glm;
  
-auto viewing_plane = ViewingPlane(glm::vec3(0), glm::vec3(0), CANVAS_WIDTH, CANVAS_HEIGHT);
+ViewingPlane viewing_plane;
 ShaderProgram shader_program;
 VolumeRenderer<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE> renderer;
-
-unsigned int canvas_points_id;
-unsigned int shader_id;
-int volume_size_location;
-int direction_location;
 
 float time_elapsed = 0.0f;
 float rotation_x = 0.0f;
@@ -76,9 +71,11 @@ int main(int argc, char ** argv) {
 	// Variable setup
 	//viewing_plane.set_orientation(glm::vec3(-128, 128, -128), glm::vec3(20, 45, 0));
 	
+	viewing_plane = ViewingPlane(glm::vec3(0), glm::vec3(0), CANVAS_WIDTH, CANVAS_HEIGHT);
 	viewing_plane.set_orientation(glm::vec3(64, 64, -128), glm::vec3(10, 10, 0));
 	shader_program = ShaderProgram("shader.vert", "shader.frag", CANVAS_WIDTH, CANVAS_HEIGHT);
 	renderer = VolumeRenderer<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE>(shader_program.get_shader_id(), viewing_plane);
+	renderer.set_view(viewing_plane);
 	auto perlin = create_perlin_volume<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE>();
 	renderer.buffer_volume_data(perlin);
 
