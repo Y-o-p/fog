@@ -1,18 +1,33 @@
 #pragma once
 
 #include <iostream>
-#include <glm/glm.hpp>
 #include <chrono>
+#include <fstream>
+#include <sstream>
 
+#include <glm/glm.hpp>
 
-void print(glm::vec3 v) {
+inline void print(glm::vec3 v) {
     std::cout << v.x << ", " << v.y << ", " << v.z << "\n";
 }
 
-void print(glm::mat4 m) {
+inline void print(glm::mat4 m) {
     for (int i = 0; i < 4; i++) {
         std::cout << m[0][i] << ", " << m[1][i] << ", " << m[2][i] << ", " << m[3][i] << "\n";
     }
+}
+
+inline std::stringstream get_file_data(const char* filename) {
+	auto file = std::ifstream(filename, std::ios::out);
+	if (file.is_open()) {
+        std::stringstream file_data;
+	    file_data << file.rdbuf();
+	    return file_data;
+    }
+    else {
+        std::cerr << "Unable to open file " << filename << std::endl;
+    }
+    return std::stringstream();
 }
 
 class Timer {
