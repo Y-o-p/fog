@@ -12,12 +12,12 @@ using namespace glm;
 class ShaderProgram {
 public:
 ShaderProgram() {}
-ShaderProgram(const char* vertex_shader, const char* fragment_shader, int width = 400, int height = 400) {
-	initialize(vertex_shader, fragment_shader, width, height);
+ShaderProgram(const char* vertex_shader, const char* fragment_shader) {
+	initialize(vertex_shader, fragment_shader);
     
 }
 
-void initialize(const char* vertex_shader, const char* fragment_shader, int width, int height);
+void initialize(const char* vertex_shader, const char* fragment_shader);
 constexpr GLuint get_shader_id() const {
     return m_shader_id;
 }

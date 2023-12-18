@@ -1,6 +1,6 @@
 #include "ShaderProgram.h"
 
-void ShaderProgram::initialize(const char *vertex_shader, const char *fragment_shader, int width, int height) {
+void ShaderProgram::initialize(const char *vertex_shader, const char *fragment_shader) {
     m_vertex_shader = get_file_data(vertex_shader).str();
 	m_fragment_shader = get_file_data(fragment_shader).str();
     

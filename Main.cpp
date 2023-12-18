@@ -10,8 +10,8 @@
 #include "OpenGL445Setup.h"
 
 // Globals
-#define CANVAS_WIDTH 400 
-#define CANVAS_HEIGHT 400
+#define CANVAS_WIDTH 800 
+#define CANVAS_HEIGHT 600
 #define CENTER_X CANVAS_WIDTH / 2
 #define CENTER_Y CANVAS_HEIGHT / 2
 #define FPS 60.0
@@ -47,16 +47,23 @@ auto timer = Timer();
 void update(int ID) {
 	timer.start();
 	time_elapsed += UPDATE_RATE / 1000.0;
-	rotation_x = cos(radians(time_elapsed * 30.0)) * 20.0;
-	rotation_y = sin(radians(time_elapsed * 30.0)) * 20.0;
+	rotation_x = cos(radians(time_elapsed * 15.0)) * 10.0;
+	rotation_y = sin(radians(time_elapsed * 15.0)) * 10.0;
 	
-	viewing_plane.set_orientation(glm::vec3(64.0f, 64.0f, -128.0f), glm::vec3(rotation_x, rotation_y, 0));
+	viewing_plane.set_orientation(glm::vec3(256.0f, 256.0f, -128.0f), glm::vec3(rotation_x, rotation_y, 0), glm::vec3(0.25));
 	renderer.set_view(viewing_plane);
 
 	display_func();
 	glutTimerFunc(UPDATE_RATE, update, 0);
 	double duration = timer.end();
-	std::printf("%fms | %f FPS\r", duration, 1.0 / (duration / 1000.0));
+	std::printf("%fms | %f FPS            \r", duration, 1.0 / (duration / 1000.0));
+}
+
+void reshape_func(int w, int h) {
+	my_3d_projection(w, h);
+	viewing_plane = ViewingPlane(glm::vec3(0), glm::vec3(0), glm::vec3(1), w, h);
+	viewing_plane.set_orientation(glm::vec3(64, 64, -128), glm::vec3(10, 10, 0), glm::vec3(0.5));
+	renderer.buffer_canvas_points(viewing_plane);
 }
 
 int main(int argc, char ** argv) {
@@ -67,14 +74,16 @@ int main(int argc, char ** argv) {
 	// Set up the callbacks
 	glutDisplayFunc(display_func);
 	glutTimerFunc(UPDATE_RATE, update, 0);
-	
+	glutReshapeFunc(reshape_func);
+
 	// Variable setup
 	//viewing_plane.set_orientation(glm::vec3(-128, 128, -128), glm::vec3(20, 45, 0));
 	
-	viewing_plane = ViewingPlane(glm::vec3(0), glm::vec3(0), CANVAS_WIDTH, CANVAS_HEIGHT);
-	viewing_plane.set_orientation(glm::vec3(64, 64, -128), glm::vec3(10, 10, 0));
-	shader_program = ShaderProgram("shader.vert", "shader.frag", CANVAS_WIDTH, CANVAS_HEIGHT);
+	shader_program = ShaderProgram("shader.vert", "shader.frag");
 	renderer = VolumeRenderer<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE>(shader_program.get_shader_id(), viewing_plane);
+	viewing_plane = ViewingPlane(glm::vec3(0), glm::vec3(0), glm::vec3(1), CANVAS_WIDTH, CANVAS_HEIGHT);
+	viewing_plane.set_orientation(glm::vec3(64, 64, -128), glm::vec3(10, 10, 0), glm::vec3(0.5));
+
 	renderer.set_view(viewing_plane);
 	auto perlin = create_perlin_volume<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE>();
 	renderer.buffer_volume_data(perlin);

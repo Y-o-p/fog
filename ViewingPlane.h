@@ -10,24 +10,25 @@ using namespace glm;
 // TODO put these definitions in CPP
 class ViewingPlane {
 public:
-    ViewingPlane(vec3 position = vec3(0), vec3 rotation = vec3(0), int width = 400, int height = 400): 
+    ViewingPlane(vec3 position = vec3(0), vec3 rotation = vec3(0), vec3 scaling = vec3(1), int width = 400, int height = 400): 
     m_width(width), m_height(height), m_mat(mat4(1)) {
         m_data.resize(m_width * m_height);
         for (int y = 0; y < m_height; y++) {
             for (int x = 0; x < m_width; x++) {
                 m_data[y * m_width + x] = vec3(
-                    (float)x / (float)m_height * 2.0f - 1.0f,
+                    (float)x / (float)m_width * 2.0f - 1.0f,
                     (float)y / (float)m_height * 2.0f - 1.0f,
                     0
                 );
             }
         }
         std::cout << "Constructed with " << m_data.size() << std::endl;
-        set_orientation(position, rotation);
+        set_orientation(position, rotation, scaling);
     }
 
-    void set_orientation(vec3 position, vec3 rotation) {
+    void set_orientation(vec3 position, vec3 rotation, vec3 scaling) {
         m_mat = mat4(1);
+        m_mat = scale(m_mat, scaling);
         m_mat = translate(m_mat, position);
         m_mat = rotate(m_mat, radians(rotation.z), vec3(0, 0, 1));
         m_mat = rotate(m_mat, radians(rotation.y), vec3(0, 1, 0));
@@ -46,6 +47,10 @@ public:
 
     mat4 get_mat() const {
         return m_mat;
+    }
+
+    vec2 get_size() const {
+        return vec2(m_width, m_height);
     }
 
     vec3 get_direction() const {
