@@ -18,6 +18,22 @@ uniform vec3 direction;
 // Outs
 out vec4 color;
 
+void get_barycentric_weights(in vec3 pos, out ivec3 b, out ivec3 c, out vec4 weights) {
+    pos = vec3(
+        pos.x - floor(pos.x),
+        pos.y - floor(pos.y),
+        pos.z - floor(pos.z)
+    );
+    vec3 a = ivec3(0);
+    bvec3 cond = greaterThanEqual(pos.xyz, pos.yzx);
+    b = ivec3(not(cond.zxy));
+    c = ivec3(cond);
+    vec3 d = ivec3(1);
+    mat3 system = inverse(mat3(a - d, b - d, c - d));
+    vec3 t = (pos - d) * system;
+    weights = vec4(t, 1.0 - t.x - t.y - t.z);
+}
+
 float calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, vec3 light_pos) {
     // Ambient lighting calculation  
     const float ambient_light = 1.0f;
@@ -39,36 +55,46 @@ float calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, 
     return clamp(ambient + diffuse + specular, 0.0f, 1.0f) / 100.0f;
 }
 
-void get_voxel(in ivec3 p, out vec4 v) {
-    v = data[p.z * volume_size * volume_size + p.y * volume_size + p.x];
+vec4 get_voxel(ivec3 p) {
+    return data[p.z * volume_size * volume_size + p.y * volume_size + p.x];
 }
 
-void get_nearest_voxel(in vec3 p, out vec4 v) {
-    ivec3 p_floor = ivec3(floor(p));
+vec4 get_nearest_voxel(vec3 pos) {
+    vec4 voxel;
+    ivec3 p_floor = ivec3(floor(pos));
     if (p_floor.x < 0 || p_floor.x >= volume_size ||
         p_floor.y < 0 || p_floor.y >= volume_size ||
         p_floor.z < 0 || p_floor.z >= volume_size) {
-        v = vec4(0.0f);
+        voxel = vec4(0.0f);
     }
     else {
-        get_voxel(p_floor, v);
+        // Do barycentric interpolation
+        vec4 weights;
+        ivec3 b;
+        ivec3 c;
+        get_barycentric_weights(pos, b, c, weights);
+        vec4 voxel_a = get_voxel(p_floor) * weights.x;
+        vec4 voxel_b = get_voxel(p_floor + b) * weights.y;
+        vec4 voxel_c = get_voxel(p_floor + c) * weights.z;
+        vec4 voxel_d = get_voxel(p_floor + ivec3(1)) * weights.w;
+        voxel = voxel_a + voxel_b + voxel_c + voxel_d;
     }
+    return voxel;
 }
 
-void calculate_ray(in vec3 start, in vec3 dir, in int steps, in float step_size, out float value) {
-    value = 0.0f;
+float calculate_ray(vec3 start, vec3 dir, int steps, float step_size) {
+    float value = 0.0f;
     vec3 movement = dir * step_size;
     vec3 current_pos = start;
     for (float t = 0.0f; t < steps; t += step_size) {
-        vec4 voxel;
-        get_nearest_voxel(current_pos, voxel);
+        vec4 voxel = get_nearest_voxel(current_pos);
         value += calculate_lighting(voxel.x, voxel.yzw, current_pos, world_pos.xyz, vec3(0.0f, 200.0f, 0.0f));
         current_pos += movement;
     }
+    return value;
 }
 
 void main() {
-    float value;
-    calculate_ray(world_pos.xyz, direction, 500, 1.0f, value);
+    float value = calculate_ray(world_pos.xyz, direction, 500, 1.0f);
     color = vec4(vec3(value), 1.0f);
 }
