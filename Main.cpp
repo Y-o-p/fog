@@ -81,10 +81,7 @@ int main(int argc, char ** argv) {
 	
 	shader_program = ShaderProgram("shader.vert", "shader.frag");
 	renderer = VolumeRenderer<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE>(shader_program.get_shader_id(), viewing_plane);
-	viewing_plane = ViewingPlane(glm::vec3(0), glm::vec3(0), glm::vec3(1), CANVAS_WIDTH, CANVAS_HEIGHT);
-	viewing_plane.set_orientation(glm::vec3(64, 64, -128), glm::vec3(10, 10, 0), glm::vec3(0.5));
-
-	renderer.set_view(viewing_plane);
+	reshape_func(CANVAS_WIDTH, CANVAS_HEIGHT);
 	auto perlin = create_perlin_volume<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE>();
 	renderer.buffer_volume_data(perlin);
 

@@ -19,18 +19,14 @@ uniform vec3 direction;
 out vec4 color;
 
 void get_barycentric_weights(in vec3 pos, out ivec3 b, out ivec3 c, out vec4 weights) {
-    pos = vec3(
-        pos.x - floor(pos.x),
-        pos.y - floor(pos.y),
-        pos.z - floor(pos.z)
-    );
+    pos -= floor(pos);
     vec3 a = ivec3(0);
     bvec3 cond = greaterThanEqual(pos.xyz, pos.yzx);
     b = ivec3(not(cond.zxy));
     c = ivec3(cond);
     vec3 d = ivec3(1);
     mat3 system = inverse(mat3(a - d, b - d, c - d));
-    vec3 t = (pos - d) * system;
+    vec3 t = system * (pos - d);
     weights = vec4(t, 1.0 - t.x - t.y - t.z);
 }
 
