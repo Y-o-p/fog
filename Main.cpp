@@ -10,13 +10,14 @@
 #include "OpenGL445Setup.h"
 
 // Globals
-#define CANVAS_WIDTH 800 
+#define CANVAS_WIDTH 600 
 #define CANVAS_HEIGHT 600
 #define CENTER_X CANVAS_WIDTH / 2
 #define CENTER_Y CANVAS_HEIGHT / 2
 #define FPS 60.0
 #define UPDATE_RATE 1000.0 / FPS
-#define CUBE_SIZE 128
+#define CUBE_SIZE 64
+#define CAMERA_SCALE 0.05
 
 using namespace glm;
  
@@ -50,7 +51,7 @@ void update(int ID) {
 	rotation_x = cos(radians(time_elapsed * 15.0)) * 10.0;
 	rotation_y = sin(radians(time_elapsed * 15.0)) * 10.0;
 	
-	viewing_plane.set_orientation(glm::vec3(256.0f, 256.0f, -128.0f), glm::vec3(rotation_x, rotation_y, 0), glm::vec3(0.25));
+	viewing_plane.set_orientation(glm::vec3(CUBE_SIZE * (1 / CAMERA_SCALE) / 2, CUBE_SIZE * (1 / CAMERA_SCALE) / 2, -300.0f), glm::vec3(rotation_x, rotation_y, 0), glm::vec3(CAMERA_SCALE));
 	renderer.set_view(viewing_plane);
 
 	display_func();
