@@ -19,6 +19,7 @@ public:
 		m_view_location = glGetUniformLocation(shader_id, "view");
 		m_volume_size_location = glGetUniformLocation(shader_id, "volume_size");
 		m_canvas_size_location = glGetUniformLocation(shader_id, "canvas_size");
+		m_light_pos_location = glGetUniformLocation(shader_id, "light_position");
 		glUniform1ui(m_volume_size_location, w);
 		buffer_canvas_points(view);
 		m_init_vertex_attributes();
@@ -43,11 +44,16 @@ public:
 	}
 
 	void set_view(const ViewingPlane& view) {
-		const float* view_mat = (const float*)value_ptr(view.get_mat());
-		glUniformMatrix4fv(m_view_location, 1, GL_TRUE, view_mat);
+		//const float* view_mat = (const float*);
+		glUniformMatrix4fv(m_view_location, 1, GL_TRUE, value_ptr(view.get_mat()));
 
 		vec3 view_direction = view.get_direction();
+		print(view_direction);
 		glUniform3f(m_direction_location, view_direction.x, view_direction.y, view_direction.z);
+	}
+
+	void set_light_pos(const glm::vec3& pos) {
+		glUniform3f(m_light_pos_location, pos.x, pos.y, pos.z);
 	}
 
 	void buffer_volume_data(const Volume<w, h, d>& volume) {
@@ -71,5 +77,6 @@ private:
 	GLuint m_canvas_points_id;
 	GLuint m_canvas_size_location;
 	GLuint m_volume_size_location;
+	GLuint m_light_pos_location;
 	GLuint m_shader_id;
 };

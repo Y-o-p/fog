@@ -17,7 +17,7 @@
 #define FPS 60.0
 #define UPDATE_RATE 1000.0 / FPS
 #define CUBE_SIZE 64
-#define CAMERA_SCALE 0.05
+#define CAMERA_SCALE 0.25
 
 using namespace glm;
  
@@ -48,11 +48,21 @@ auto timer = Timer();
 void update(int ID) {
 	timer.start();
 	time_elapsed += UPDATE_RATE / 1000.0;
-	rotation_x = cos(radians(time_elapsed * 15.0)) * 10.0;
-	rotation_y = sin(radians(time_elapsed * 15.0)) * 10.0;
-	
-	viewing_plane.set_orientation(glm::vec3(CUBE_SIZE * (1 / CAMERA_SCALE) / 2, CUBE_SIZE * (1 / CAMERA_SCALE) / 2, -300.0f), glm::vec3(rotation_x, rotation_y, 0), glm::vec3(CAMERA_SCALE));
+	glm::vec3 light_pos = glm::vec3(
+		cos(radians(time_elapsed * 100.0)) * 100.0 + 32,
+		64,
+		sin(radians(time_elapsed * 100.0)) * 100.0 + 32
+	);
+	renderer.set_light_pos(light_pos);
+
+	viewing_plane.set_orientation(
+		//glm::vec3(CUBE_SIZE * (1 / CAMERA_SCALE) / 2, CUBE_SIZE * (1 / CAMERA_SCALE) / 2, -300.0f),
+		glm::vec3(-128, 120, -128),
+		glm::vec3(20, 45, 0),
+		glm::vec3(CANVAS_WIDTH / 2.0f * CAMERA_SCALE, CANVAS_HEIGHT / 2.0f * CAMERA_SCALE, 1.0f)
+	);
 	renderer.set_view(viewing_plane);
+	print(viewing_plane.get_mat());
 
 	display_func();
 	glutTimerFunc(UPDATE_RATE, update, 0);
