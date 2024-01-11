@@ -16,11 +16,11 @@ out vec4 color;
 
 void get_barycentric_weights(in vec3 pos, out ivec3 b, out ivec3 c, out vec4 weights) {
     pos -= floor(pos);
-    vec3 a = ivec3(0);
+    ivec3 a = ivec3(0);
     bvec3 cond = bvec3(pos.x > pos.y, pos.y >= pos.z, pos.z >= pos.x);
     b = ivec3(not(cond.zxy));
     c = ivec3(cond);
-    vec3 d = ivec3(1);
+    ivec3 d = ivec3(1);
     mat3 system = inverse(mat3(a - d, b - d, c - d));
     vec3 t = system * (pos - d);
     weights = vec4(t, 1.0 - t.x - t.y - t.z);
@@ -35,7 +35,7 @@ float calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, 
     const float diffuse_light = 1.5;
     const vec3 light_vector = normalize(light_pos - pos);
     float diffuse = diffuse_light * dot(light_vector, gradient);
-    diffuse = max(0, diffuse);
+    diffuse = max(0.0f, diffuse);
 
     // Specular lighting calculation
     const float specular_light = 2.0;
@@ -43,7 +43,7 @@ float calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, 
     const vec3 viewer_vector = normalize(viewer_pos - pos);
     const vec3 halfway_vector = normalize((light_vector + viewer_vector) / 2.0f);
     float specular = specular_light * pow(dot(halfway_vector, gradient), shinniness);
-    specular = max(0, specular);
+    specular = max(0.0f, specular);
 
     // Phong
     float final = (ambient + diffuse + specular) / 100.0;

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <vector>
 #include <glm/vec3.hpp>
+#define GLM_SWIZZLE_XYZW
 #include <glm/glm.hpp>
 #include "PerlinNoise.h"
 #include <iostream>
@@ -11,9 +12,12 @@
 
 #define WIDTH_HEIGHT_DEPTH template<std::size_t w, std::size_t h, std::size_t d>
 
-struct VoxelVertex {
-    float value;
-    glm::vec3 gradient;
+union VoxelVertex {
+    glm::vec4 xyzw;
+    struct {
+        float value;
+        glm::vec3 gradient;
+    };
 };
 
 struct Voxel {
@@ -42,8 +46,8 @@ public:
         m_data = other.m_data;
     }
 
-    constexpr VoxelVertex& get_voxel(std::size_t x, std::size_t y, std::size_t z) {
-        return m_data[z * w * h + y * h + x];
+    constexpr VoxelVertex& get_voxel(ivec3 i) {
+        return m_data[i.z * w * h + i.y * h + i.x];
     }
 
     const VoxelVertex *const get_data() const {
