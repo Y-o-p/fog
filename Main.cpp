@@ -5,30 +5,38 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "VolumeRenderer.h"
-#include "ShaderProgram.h"
-#include "OpenGL445Setup.h"
 
 // Globals
-#define CANVAS_WIDTH 600 
-#define CANVAS_HEIGHT 600
+#define CANVAS_WIDTH 400 
+#define CANVAS_HEIGHT 400
 #define CENTER_X CANVAS_WIDTH / 2
 #define CENTER_Y CANVAS_HEIGHT / 2
 #define FPS 60.0
 #define UPDATE_RATE 1000.0 / FPS
-#define CUBE_SIZE 64
+#define CUBE_SIZE 63
 #define CAMERA_SCALE 0.25
+
+#define CPU_BASED
 
 using namespace glm;
  
-ViewingPlane viewing_plane;
-ShaderProgram shader_program;
-VolumeRenderer<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE> renderer;
+#ifdef CPU_BASED
+#include "VolumeRendererCPU.h"
+Volume<CUBE_SIZE> perlin = create_perlin_volume<CUBE_SIZE>();
+VolumeRendererCPU<CUBE_SIZE> renderer = VolumeRendererCPU<CUBE_SIZE>();
+#else
+#include "VolumeRenderer.h"
+VolumeRenderer<CUBE_SIZE> renderer;
+#endif
+
+ViewingPlane viewing_plane = ViewingPlane(CANVAS_WIDTH, CANVAS_HEIGHT);
+#include "OpenGL445Setup.h"
 
 float time_elapsed = 0.0f;
 float rotation_x = 0.0f;
 float rotation_y = 0.0f;
 float rotation_z = 0.0f;
+vec3 light_pos = vec3(0);
 
 void clear_screen() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -37,10 +45,19 @@ void clear_screen() {
 
 void display_func() {
 	clear_screen();
-	
-	// Do the rendering !! 
+	light_pos = glm::vec3(
+		cos(radians(time_elapsed * 100.0)) * 100.0 + 32,
+		64,
+		sin(radians(time_elapsed * 100.0)) * 100.0 + 32
+	);
+	viewing_plane.set_orientation(
+		glm::vec3(-128, 120, -128),
+		glm::vec3(20, 45, 0),
+		glm::vec3(CANVAS_WIDTH / 2.0f * CAMERA_SCALE, CANVAS_HEIGHT / 2.0f * CAMERA_SCALE, 1.0f)
+	);
+	renderer.set_light_pos(&light_pos);
+	renderer.set_view(&viewing_plane);
 	renderer.render();
-	
 	glFlush();
 }
 
@@ -48,33 +65,13 @@ auto timer = Timer();
 void update(int ID) {
 	timer.start();
 	time_elapsed += UPDATE_RATE / 1000.0;
-	glm::vec3 light_pos = glm::vec3(
-		cos(radians(time_elapsed * 100.0)) * 100.0 + 32,
-		64,
-		sin(radians(time_elapsed * 100.0)) * 100.0 + 32
-	);
-	renderer.set_light_pos(light_pos);
-
-	viewing_plane.set_orientation(
-		//glm::vec3(CUBE_SIZE * (1 / CAMERA_SCALE) / 2, CUBE_SIZE * (1 / CAMERA_SCALE) / 2, -300.0f),
-		glm::vec3(-128, 120, -128),
-		glm::vec3(20, 45, 0),
-		glm::vec3(CANVAS_WIDTH / 2.0f * CAMERA_SCALE, CANVAS_HEIGHT / 2.0f * CAMERA_SCALE, 1.0f)
-	);
-	renderer.set_view(viewing_plane);
-	print(viewing_plane.get_mat());
-
+	
 	display_func();
+
 	glutTimerFunc(UPDATE_RATE, update, 0);
 	double duration = timer.end();
 	std::printf("%fms | %f FPS            \r", duration, 1.0 / (duration / 1000.0));
-}
-
-void reshape_func(int w, int h) {
-	my_3d_projection(w, h);
-	viewing_plane = ViewingPlane(glm::vec3(0), glm::vec3(0), glm::vec3(1), w, h);
-	viewing_plane.set_orientation(glm::vec3(64, 64, -128), glm::vec3(10, 10, 0), glm::vec3(0.5));
-	renderer.buffer_canvas_points(viewing_plane);
+	std::cout << std::flush;
 }
 
 int main(int argc, char ** argv) {
@@ -85,16 +82,12 @@ int main(int argc, char ** argv) {
 	// Set up the callbacks
 	glutDisplayFunc(display_func);
 	glutTimerFunc(UPDATE_RATE, update, 0);
-	glutReshapeFunc(reshape_func);
 
-	// Variable setup
-	//viewing_plane.set_orientation(glm::vec3(-128, 128, -128), glm::vec3(20, 45, 0));
-	
-	shader_program = ShaderProgram("shader.vert", "shader.frag");
-	renderer = VolumeRenderer<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE>(shader_program.get_shader_id(), viewing_plane);
-	reshape_func(CANVAS_WIDTH, CANVAS_HEIGHT);
-	auto perlin = create_perlin_volume<CUBE_SIZE, CUBE_SIZE, CUBE_SIZE>();
-	renderer.buffer_volume_data(perlin);
+#ifndef CPU_BASED
+	auto perlin = create_perlin_volume<CUBE_SIZE>();
+	renderer = VolumeRenderer<CUBE_SIZE>(viewing_plane);
+#endif
+	renderer.set_volume(&perlin);
 
 	// Start the main loop
 	glutMainLoop();

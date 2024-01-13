@@ -10,7 +10,7 @@ using namespace glm;
 // TODO put these definitions in CPP
 class ViewingPlane {
 public:
-    ViewingPlane(vec3 position = vec3(0), vec3 rotation = vec3(0), vec3 scaling = vec3(1), int width = 400, int height = 400): 
+    ViewingPlane(int width = 400, int height = 400, vec3 position = vec3(0), vec3 rotation = vec3(0), vec3 scaling = vec3(1)): 
     m_width(width), m_height(height), m_mat(mat4(1)) {
         m_data.resize(m_width * m_height);
         for (int y = 0; y < m_height; y++) {
@@ -22,7 +22,7 @@ public:
                 );
             }
         }
-        std::cout << "Constructed with " << m_data.size() << std::endl;
+        std::cout << "Constructed ViewingPlane with " << m_data.size() << std::endl;
         set_orientation(position, rotation, scaling);
     }
 
@@ -40,14 +40,8 @@ public:
         m_mat = translation_mat * rotation_mat * scaling_mat;
     }
 
-    std::vector<vec3> get_plane(bool transformed = true) const {
-        auto oriented_data = m_data;
-        // if (transformed) {
-        //     for (auto& point : oriented_data) {
-        //         point = m_mat * vec4(point, 1.0f);
-        //     }
-        // }
-        return oriented_data;
+    const std::vector<vec3>& get_plane() const {
+        return m_data;
     }
 
     mat4 get_mat() const {
