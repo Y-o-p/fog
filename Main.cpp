@@ -13,7 +13,7 @@
 #define CENTER_Y CANVAS_HEIGHT / 2
 #define FPS 60.0
 #define UPDATE_RATE 1000.0 / FPS
-#define CUBE_SIZE 63
+#define CUBE_SIZE 60
 #define CAMERA_SCALE 0.25
 
 #define CPU_BASED
@@ -51,7 +51,7 @@ void display_func() {
 		sin(radians(time_elapsed * 100.0)) * 100.0 + 32
 	);
 	viewing_plane.set_orientation(
-		glm::vec3(-128, 120, -128),
+		glm::vec3(-128, 112, -128),
 		glm::vec3(20, 45, 0),
 		glm::vec3(CANVAS_WIDTH / 2.0f * CAMERA_SCALE, CANVAS_HEIGHT / 2.0f * CAMERA_SCALE, 1.0f)
 	);

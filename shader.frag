@@ -84,7 +84,7 @@ float calculate_ray(vec3 start, vec3 dir, int steps, float step_size) {
     for (float t = 0.0f; t < steps; t += step_size) {
         vec4 voxel = get_nearest_voxel(current_pos);
         if (voxel != vec4(0)) {
-            value += calculate_lighting(voxel.x, voxel.yzw, current_pos, world_pos.xyz, light_position);
+            value += calculate_lighting(voxel.w, voxel.xyz, current_pos, world_pos.xyz, light_position);
         }
         current_pos += movement;
     }

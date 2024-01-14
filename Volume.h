@@ -16,7 +16,7 @@ using namespace glm;
 #define VOLUME_TEMPLATE template<size_t length>
 
 constexpr size_t cube(const size_t& x) {
-    return static_cast<size_t>(std::pow(x, 3));
+    return static_cast<size_t>(x * x * x);
 }
 
 union VoxelVertex {
