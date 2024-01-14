@@ -1,0 +1,13 @@
+GPU 100 frames
+Total rendering time..........0.0246148s
+Mean frame time...............0.246148ms
+Frame time variance...........0.00680644ms^2
+Frame time std................0.082501152ms
+Mean FPS......................4062.6FPS
+
+CPU 100 frames
+Total rendering time..........911.272s
+Mean frame time...............9112.72ms
+Frame time variance...........5038.08ms^2
+Frame time std................70.979433641ms
+Mean FPS......................0.109737FPS

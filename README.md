@@ -1,8 +1,6 @@
 # Volume Ray Caster
 
-![Smoke cube](imgs/ambient_diffuse_specular.png)
-
-![Fog](imgs/fog.gif)
+![Perlin Noise Cube](imgs/PerlinCube.gif)
 
 ## About
 
