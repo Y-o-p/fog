@@ -18,97 +18,114 @@ constexpr size_t cube(const size_t& x) {
     return static_cast<size_t>(std::pow(x, 3));
 }
 
-struct VoxelVertex {
-    float value;
+// struct VoxelVertex {
+//     float value;
+//     vec3 gradient;
+
+//     VoxelVertex operator+(const VoxelVertex& other) const {
+//         return VoxelVertex {
+//             value + other.value,
+//             gradient + other.gradient
+//         };
+//     }
+
+//     VoxelVertex operator*(float s) const {
+//         return VoxelVertex {
+//             value * s,
+//             gradient * s
+//         };
+//     }
+// };
+
+union VoxelVertex {
+    vec4 xyzw;
     vec3 gradient;
 
-    VoxelVertex operator+(const VoxelVertex& other) const {
-        return VoxelVertex {
-            value + other.value,
-            gradient + other.gradient
-        };
-    }
-
-    VoxelVertex operator*(float s) const {
-        return VoxelVertex {
-            value * s,
-            gradient * s
-        };
+    inline constexpr float value() {
+        return xyzw.w;
     }
 };
+
+inline constexpr size_t cartesian_to_index(ivec3 v, size_t length) {
+    return v.z * length * length + v.y * length + v.x;
+}
 
 VOLUME_TEMPLATE
 class Volume {
 public:
-    constexpr Volume(std::array<VoxelVertex, cube(length)>&& data) {
-        m_data = data;
-        calculate_gradient();
-    }
-
-    constexpr Volume() {
-        m_data = std::array<VoxelVertex, cube(length)>();
-    }
-
-    constexpr Volume(const Volume<length>& other) {
-        m_data = other.m_data;
-    }
-
-    constexpr VoxelVertex& get_voxel(ivec3 i) {
-        return m_data[i.z * length * length + i.y * length + i.x];
-    }
-
-    constexpr VoxelVertex get_voxel(ivec3 i) const {
-        return m_data[i.z * length * length + i.y * length + i.x];
-    }
-
-    inline const VoxelVertex *const get_data() const {
-        return m_data.data();
-    }
-
-    constexpr void calculate_gradient() {
-        for (int z = 1; z < length - 1; z++) {
-            for (int y = 1; y < length - 1; y++) {
-                for (int x = 1; x < length - 1; x++) {
-                    VoxelVertex& v = get_voxel(ivec3(x, y, z));
-                    
-                    // X-axis gradient calculation
-                    VoxelVertex& x_before = get_voxel(ivec3(x - 1, y, z));
-                    VoxelVertex& x_after = get_voxel(ivec3(x + 1, y, z));
-                    v.gradient.x = (x_before.value - x_after.value);
-
-                    // Y-axis gradient calculation
-                    VoxelVertex& y_before = get_voxel(ivec3(x, y - 1, z));
-                    VoxelVertex& y_after = get_voxel(ivec3(x, y + 1, z));
-                    v.gradient.y = (y_before.value - y_after.value);
-
-                    // Z-axis gradient calculation
-                    VoxelVertex& z_before = get_voxel(ivec3(x, y, z - 1));
-                    VoxelVertex& z_after = get_voxel(ivec3(x, y, z + 1));
-                    v.gradient.z = (z_before.value - z_after.value);
-
-                    v.gradient = normalize(v.gradient);
+    Volume(const std::array<float, cube(length)>& values) {
+        // Calculate gradient
+        for (int z = 0; z < length; z++) {
+            for (int y = 0; y < length; y++) {
+                for (int x = 0; x < length; x++) {
+                    ivec3 position = {x, y, z};
+                    vec3 gradient = m_calculate_gradient(values, position);
+                    m_data[cartesian_to_index(position, length)] = {
+                        vec4(gradient, values[cartesian_to_index(position, length)])
+                    };
                 }
             }
         }
     }
-private:
+
+    inline const VoxelVertex & get(ivec3 v) const {
+        return (*this)[cartesian_to_index(v, length)];
+    }
+
+    inline const VoxelVertex * get_data() const {
+        return m_data.data();
+    }
+
+    const VoxelVertex & operator[](int i) const {
+        return m_data[i];
+    }
+    //VoxelVertex operator[](ivec3 v) const {return m_data[cartesian_to_index(v, length)];}
+
+private:    
+    inline constexpr float m_safe_get(const std::array<float, cube(length)> & values, ivec3 i) {
+        if (i.x < 0 || i.y < 0 || i.z < 0 ||
+            i.x >= length - 1 || i.y >= length - 1 || i.z >= length - 1) {
+            return 0.0f;
+        }
+        return values[cartesian_to_index(i, length)];
+    }
+
+    constexpr vec3 m_calculate_gradient(const std::array<float, cube(length)> & values, const ivec3& v) {
+        // X-axis
+        float x_before = m_safe_get(values, ivec3(v.x - 1, v.y, v.z));
+        float x_after = m_safe_get(values, ivec3(v.x + 1, v.y, v.z));
+        // Y-axis
+        float y_before = m_safe_get(values, ivec3(v.x, v.y - 1, v.z));
+        float y_after = m_safe_get(values, ivec3(v.x, v.y + 1, v.z));
+        // Z-axis 
+        float z_before = m_safe_get(values, ivec3(v.x, v.y, v.z - 1));
+        float z_after = m_safe_get(values, ivec3(v.x, v.y, v.z + 1));
+        
+        vec3 gradient = {
+            x_before - x_after,
+            y_before - y_after,
+            z_before - z_after
+        };
+        gradient = normalize(gradient);
+        return gradient;
+    }
+
     std::array<VoxelVertex, cube(length)> m_data;
 };
 
 VOLUME_TEMPLATE
 constexpr Volume<length> create_perlin_volume() {
     const siv::PerlinNoise perlin{ 123456u };
-	auto noise = std::array<VoxelVertex, cube(length)>();
+	auto noise = std::array<float, cube(length)>();
 	for (int z = 0; z < length; z++) {
 		for (int y = 0; y < length; y++) {
             for (int x = 0; x < length; x++) {
-                noise[z * length * length + y * length + x] = {
-                    (float)perlin.noise3D_01(0.05 * (double)x, 0.05 * (double)y, 0.05 * (double)z),
-                    vec3(0.0f)
+                noise[cartesian_to_index({x, y, z}, length)] = {
+                    (float)perlin.noise3D_01(0.05 * (double)x, 0.05 * (double)y, 0.05 * (double)z)
                 };
 	        }
 	    }
 	}
-	auto volume = Volume<length>(std::move(noise));
+	auto volume = Volume<length>(noise);
     return volume;
 }

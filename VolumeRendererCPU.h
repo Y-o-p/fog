@@ -87,21 +87,21 @@ private:
     }
 
     constexpr VoxelVertex get_nearest_voxel(vec3 pos) {
-        VoxelVertex voxel = VoxelVertex { 0.0f, vec3(0) };
+        VoxelVertex voxel = {vec4(0)};
         ivec3 p_floor = ivec3(floor(pos));
-        if (!(p_floor.x <= 0 || p_floor.x >= length - 1 ||
-            p_floor.y <= 0 || p_floor.y >= length - 1 ||
-            p_floor.z <= 0 || p_floor.z >= length - 1)) {
+        if (!(p_floor.x < 0 || p_floor.x >= length - 1 ||
+            p_floor.y < 0 || p_floor.y >= length - 1 ||
+            p_floor.z < 0 || p_floor.z >= length - 1)) {
             // Do barycentric interpolation
             vec4 weights = vec4(0.0f);
             ivec3 b = ivec3(0);
             ivec3 c = ivec3(0);
             get_barycentric_weights(pos, b, c, weights);
-            VoxelVertex voxel_a = m_volume->get_voxel(p_floor) * weights.x;
-            VoxelVertex voxel_b = m_volume->get_voxel(p_floor + b) * weights.y;
-            VoxelVertex voxel_c = m_volume->get_voxel(p_floor + c) * weights.z;
-            VoxelVertex voxel_d = m_volume->get_voxel(p_floor + ivec3(1)) * weights.w;
-            voxel = voxel_a + voxel_b + voxel_c + voxel_d;
+            vec4 voxel_a = m_volume->get(p_floor).xyzw    * weights.x;
+            vec4 voxel_b = m_volume->get(p_floor + b).xyzw * weights.y;
+            vec4 voxel_c = m_volume->get(p_floor + c).xyzw * weights.z;
+            vec4 voxel_d = m_volume->get(p_floor + ivec3(1)).xyzw * weights.w;
+            voxel = {voxel_a + voxel_b + voxel_c + voxel_d};
         }
         return voxel;
     }
@@ -113,7 +113,7 @@ private:
         for (float t = 0.0f; t < steps; t += step_size) {
             VoxelVertex voxel = get_nearest_voxel(current_pos);
             if (voxel.gradient != vec3(0.0f)) {
-                value += calculate_lighting(voxel.value, voxel.gradient, current_pos, start, light_position);
+                value += calculate_lighting(voxel.value(), voxel.gradient, current_pos, start, light_position);
             }
             current_pos += movement;
         }
