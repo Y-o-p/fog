@@ -11,6 +11,7 @@ VOLUME_TEMPLATE
 class VolumeRendererCPU : public Renderer<length> {
 public:
     void render() override {
+        //vec3 background_color = normalize(vec3(0, 204, 255));
         vec2 canvas_size = m_view->get_size();
         const std::vector<vec3>& plane = m_view->get_plane();
         vec3 direction = m_view->get_direction();
@@ -21,14 +22,14 @@ public:
             for (int x = 0; x < canvas_size.x; x++) {
                 auto index = y * canvas_size.x + x;
                 vec4 point = view_mat * vec4(plane[index], 1.0f);
-                float ray_value = m_calculate_ray(
+                float ray_value = calculate_ray(
                     point,
                     direction,
                     500,
                     1.0f,
                     *m_light_pos
                 );
-                vec3 color = vec3(ray_value);
+                vec3 color = vec3(ray_value);//vec3(ray_value) + (1.0f - ray_value) * background_color;
                 glColor3f(color.x, color.y, color.z);
                 glVertex2i(x, y);
             }
@@ -49,7 +50,19 @@ public:
     }
 
 private:
-    constexpr float m_calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, vec3 light_pos) {
+    constexpr void get_barycentric_weights(vec3 pos, ivec3& b, ivec3& c, vec4& weights) {
+        pos -= floor(pos);
+        ivec3 a = ivec3(0);
+        bvec3 cond = bvec3(pos.x > pos.y, pos.y >= pos.z, pos.z >= pos.x);
+        b = ivec3(bvec3(!cond.z, !cond.x, !cond.y));
+        c = ivec3(cond);
+        ivec3 d = ivec3(1);
+        mat3 system = inverse(mat3(a - d, b - d, c - d));
+        vec3 t = system * (pos - (vec3)d);
+        weights = vec4(t, 1.0 - t.x - t.y - t.z);
+    }
+
+    constexpr float calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, vec3 light_pos) {
         // Ambient lighting calculation  
         const float ambient_light = 1.0;
         const float ambient = value * ambient_light;
@@ -93,7 +106,7 @@ private:
         return voxel;
     }
 
-    constexpr float m_calculate_ray(vec3 start, vec3 dir, int steps, float step_size, vec3 light_position = {0, 0, 0}) {
+    constexpr float calculate_ray(vec3 start, vec3 dir, int steps, float step_size, vec3 light_position = {0, 0, 0}) {
         float value = 0.0;
         vec3 movement = dir * step_size;
         vec3 current_pos = start;
