@@ -94,10 +94,4 @@ float calculate_ray(vec3 start, vec3 dir, int steps, float step_size) {
 void main() {
     float value = calculate_ray(world_pos.xyz, direction, 500, 1.0f);
     color = vec4(vec3(value), 1.0f);
-
-    // ivec3 b, c;
-    // vec4 weights;
-    // get_barycentric_weights(vec3(0.99, 0.98, 0.0), b, c, weights);
-    // color = vec4(weights.xyz, 1.0);
-    //color = vec4(1.0, 0.0, 1.0, 1.0);
 }

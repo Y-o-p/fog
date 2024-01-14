@@ -71,7 +71,7 @@ void update(int ID) {
 	glutTimerFunc(UPDATE_RATE, update, 0);
 	double duration = timer.end();
 	std::printf("%fms | %f FPS            \r", duration, 1.0 / (duration / 1000.0));
-	std::cout << std::flush;
+	std::fflush(stdout);
 }
 
 int main(int argc, char ** argv) {

@@ -3,7 +3,6 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/matrix_transform.hpp>
 #include <iostream>
 
 using namespace glm;
@@ -35,7 +34,7 @@ public:
         mat4 rot_z = rotate(mat4(1.0), radians(rotation.z), vec3(0, 0, 1));
         mat4 rotation_mat = rot_z * rot_y * rot_x;
         // Scale
-        mat4 scaling_mat = glm::scale(mat4(1.0), scaling);
+        mat4 scaling_mat = scale(mat4(1.0), scaling);
         // Final
         m_mat = translation_mat * rotation_mat * scaling_mat;
     }

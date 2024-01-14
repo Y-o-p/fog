@@ -2,13 +2,14 @@
 
 #include <algorithm>
 #include <array>
-#include <glm/vec3.hpp>
-#include <glm/glm.hpp>
-#include "PerlinNoise.h"
 #include <iostream>
-#include <array>
+
+#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+#include "PerlinNoise.h"
+
 #include "Util.h"
-#include <cmath>
 
 using namespace glm;
 
@@ -17,25 +18,6 @@ using namespace glm;
 constexpr size_t cube(const size_t& x) {
     return static_cast<size_t>(std::pow(x, 3));
 }
-
-// struct VoxelVertex {
-//     float value;
-//     vec3 gradient;
-
-//     VoxelVertex operator+(const VoxelVertex& other) const {
-//         return VoxelVertex {
-//             value + other.value,
-//             gradient + other.gradient
-//         };
-//     }
-
-//     VoxelVertex operator*(float s) const {
-//         return VoxelVertex {
-//             value * s,
-//             gradient * s
-//         };
-//     }
-// };
 
 union VoxelVertex {
     vec4 xyzw;
@@ -114,7 +96,7 @@ private:
 };
 
 VOLUME_TEMPLATE
-constexpr Volume<length> create_perlin_volume() {
+Volume<length> create_perlin_volume() {
     const siv::PerlinNoise perlin{ 123456u };
 	auto noise = std::array<float, cube(length)>();
 	for (int z = 0; z < length; z++) {
