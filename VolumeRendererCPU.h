@@ -12,24 +12,25 @@ class VolumeRendererCPU : public Renderer<length> {
 public:
     void render() override {
         //vec3 background_color = normalize(vec3(0, 204, 255));
-        vec2 canvas_size = m_view->get_size();
+        ivec3 canvas_size = m_view->get_size();
         const std::vector<vec3>& plane = m_view->get_plane();
+        float sample_period = m_view->get_sample_period();
         vec3 direction = m_view->get_direction();
         mat4 view_mat = m_view->get_mat();
 
         glBegin(GL_POINTS);
-        for (int y = 0; y < canvas_size.x; y++) {
+        for (int y = 0; y < canvas_size.y; y++) {
             for (int x = 0; x < canvas_size.x; x++) {
                 auto index = y * canvas_size.x + x;
                 vec4 point = view_mat * vec4(plane[index], 1.0f);
                 float ray_value = calculate_ray(
                     point,
                     direction,
-                    500,
-                    1.0f,
+                    canvas_size.z,
+                    sample_period,
                     *m_light_pos
                 );
-                vec3 color = vec3(ray_value);//vec3(ray_value) + (1.0f - ray_value) * background_color;
+                vec3 color = vec3(ray_value);
                 glColor3f(color.x, color.y, color.z);
                 glVertex2i(x, y);
             }
@@ -82,7 +83,7 @@ private:
         specular = max(0.0f, specular);
 
         // Phong
-        float final = (ambient + diffuse + specular) / 100.0;
+        float final = (ambient + diffuse + specular);
         return final;
     }
 
@@ -106,18 +107,19 @@ private:
         return voxel;
     }
 
-    constexpr float calculate_ray(vec3 start, vec3 dir, int steps, float step_size, vec3 light_position = {0, 0, 0}) {
+    constexpr float calculate_ray(vec3 start, vec3 dir, float distance, float step_size, vec3 light_position = {0, 0, 0}) {
         float value = 0.0;
         vec3 movement = dir * step_size;
         vec3 current_pos = start;
-        for (float t = 0.0f; t < steps; t += step_size) {
+        for (float t = 0.0f; t < distance; t += step_size) {
             VoxelVertex voxel = get_nearest_voxel(current_pos);
             if (voxel.gradient != vec3(0.0f)) {
                 value += calculate_lighting(voxel.value(), voxel.gradient, current_pos, start, light_position);
             }
             current_pos += movement;
         }
-        return clamp(value, 0.0f, 1.0f);
+        float dimming_factor = step_size / 100.0;
+        return clamp(value * dimming_factor, 0.0f, 1.0f);
     }
 
     const Volume<length> * m_volume;

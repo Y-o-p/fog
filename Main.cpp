@@ -8,16 +8,18 @@
 
 
 // Globals
-#define CANVAS_WIDTH 400 
-#define CANVAS_HEIGHT 400
-#define CENTER_X CANVAS_WIDTH / 2
-#define CENTER_Y CANVAS_HEIGHT / 2
-#define FPS 60.0
-#define UPDATE_RATE 1000.0 / FPS
-#define CUBE_SIZE 60
-#define CAMERA_SCALE 0.25
+static constexpr auto CANVAS_WIDTH = 400;
+static constexpr auto CANVAS_HEIGHT = 400;
+static constexpr auto CENTER_X = CANVAS_WIDTH / 2;
+static constexpr auto CENTER_Y = CANVAS_HEIGHT / 2;
+static constexpr auto FPS = 60.0;
+static constexpr auto UPDATE_RATE = 1000.0 / FPS;
+static constexpr auto CUBE_SIZE = 60;
+static constexpr auto CAMERA_SCALE = 0.25;
+static constexpr auto BACK_PLANE = 128;
+static constexpr auto SAMPLE_PERIOD = 0.5f;
 
-#define CPU_BASED
+//#define CPU_BASED
 
 using namespace glm;
  
@@ -30,7 +32,7 @@ static VolumeRendererCPU<CUBE_SIZE> renderer = VolumeRendererCPU<CUBE_SIZE>();
 static VolumeRenderer<CUBE_SIZE> renderer;
 #endif
 
-static ViewingPlane viewing_plane = ViewingPlane(CANVAS_WIDTH, CANVAS_HEIGHT);
+static ViewingPlane viewing_plane = ViewingPlane(CANVAS_WIDTH, CANVAS_HEIGHT, BACK_PLANE, SAMPLE_PERIOD);
 #include "OpenGL445Setup.h"
 
 static float time_elapsed = 0.0f;
@@ -54,7 +56,7 @@ void display_func() {
 		sin(radians(time_elapsed * 100.0)) * 100.0 + 32
 	);
 	viewing_plane.set_orientation(
-		glm::vec3(-128, 112, -128),
+		glm::vec3(-3, 50, -3),
 		glm::vec3(20, 45, 0),
 		glm::vec3(CANVAS_WIDTH / 2.0f * CAMERA_SCALE, CANVAS_HEIGHT / 2.0f * CAMERA_SCALE, 1.0f)
 	);
@@ -65,7 +67,7 @@ void display_func() {
 }
 
 void update(int ID) {
-	if (frame_times.size() < 102) {
+	if (frame_times.size() < 62) {
 		timer.start();
 		time_elapsed += UPDATE_RATE / 1000.0;
 		

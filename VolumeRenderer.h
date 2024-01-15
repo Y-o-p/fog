@@ -23,6 +23,8 @@ public:
 		m_volume_size_location = glGetUniformLocation(shader_id, "volume_size");
 		m_canvas_size_location = glGetUniformLocation(shader_id, "canvas_size");
 		m_light_pos_location = glGetUniformLocation(shader_id, "light_position");
+		m_depth_location = glGetUniformLocation(shader_id, "depth");
+		m_sample_period_location = glGetUniformLocation(shader_id, "sample_period");
 		buffer_canvas_points(view);
 		m_init_vertex_attributes();
 	}
@@ -46,6 +48,12 @@ public:
 
 		vec3 view_direction = view->get_direction();
 		glUniform3f(m_direction_location, view_direction.x, view_direction.y, view_direction.z);
+
+		int depth = view->get_size().z;
+		glUniform1i(m_depth_location, depth);
+
+		float sample_period = view->get_sample_period();
+		glUniform1f(m_sample_period_location, sample_period);
 	}
 
 	void set_light_pos(const glm::vec3 * pos) override {
@@ -80,4 +88,6 @@ private:
 	GLuint m_canvas_size_location;
 	GLuint m_volume_size_location;
 	GLuint m_light_pos_location;
+	GLuint m_depth_location;
+	GLuint m_sample_period_location;
 };

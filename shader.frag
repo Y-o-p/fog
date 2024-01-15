@@ -10,6 +10,8 @@ layout(std430, binding = 0) buffer volume {
 uniform uint volume_size; 
 uniform vec3 direction;
 uniform vec3 light_position;
+uniform int depth;
+uniform float sample_period;
 
 // Outs
 out vec4 color;
@@ -46,7 +48,7 @@ float calculate_lighting(float value, vec3 gradient, vec3 pos, vec3 viewer_pos, 
     specular = max(0.0f, specular);
 
     // Phong
-    float final = (ambient + diffuse + specular) / 100.0;
+    float final = (ambient + diffuse + specular);
     return final;
 }
 
@@ -77,21 +79,22 @@ vec4 get_nearest_voxel(vec3 pos) {
     return voxel;
 }
 
-float calculate_ray(vec3 start, vec3 dir, int steps, float step_size) {
+float calculate_ray(vec3 start, vec3 dir, float dist, float step_size) {
     float value = 0.0;
     vec3 movement = dir * step_size;
     vec3 current_pos = start;
-    for (float t = 0.0f; t < steps; t += step_size) {
+    for (float t = 0.0f; t < dist; t += step_size) {
         vec4 voxel = get_nearest_voxel(current_pos);
         if (voxel != vec4(0)) {
             value += calculate_lighting(voxel.w, voxel.xyz, current_pos, world_pos.xyz, light_position);
         }
         current_pos += movement;
     }
-    return clamp(value, 0.0, 1.0);
+    float dimming_factor = sample_period / 100.0;
+    return clamp(value * dimming_factor, 0.0, 1.0);
 }
 
 void main() {
-    float value = calculate_ray(world_pos.xyz, direction, 500, 1.0f);
+    float value = calculate_ray(world_pos.xyz, direction, depth, sample_period);
     color = vec4(vec3(value), 1.0f);
 }
