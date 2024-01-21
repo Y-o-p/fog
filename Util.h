@@ -1,9 +1,10 @@
 #pragma once
 
 #include <iostream>
-#include <chrono>
+#include <ctime>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 #include <glm/glm.hpp>
 
@@ -29,19 +30,3 @@ inline std::stringstream get_file_data(const char* filename) {
     }
     return std::stringstream();
 }
-
-class Timer {
-public:
-    void start() {
-        m_last = std::chrono::high_resolution_clock::now();
-    }
-
-    double end() {
-        auto now = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> dur = now - m_last;
-        return dur.count();
-    }
-
-private:
-    std::chrono::time_point<std::chrono::system_clock> m_last;
-};
