@@ -18,8 +18,6 @@ static constexpr auto CAMERA_SCALE = 0.25;
 static constexpr auto BACK_PLANE = 128;
 static constexpr auto SAMPLE_PERIOD = 0.5f;
 
-//#define CPU_BASED
-
 using namespace glm;
  
 #ifdef CPU_BASED
@@ -74,8 +72,8 @@ void update(int ID) {
 
 		glutTimerFunc(UPDATE_RATE, update, 0);
 		double duration = timer.end();
-		std::printf("%fms | %f FPS            \n", duration * 1000.0, 1.0 / duration);
-		std::fflush(stdout);
+		//std::printf("%fms | %f FPS            \n", duration * 1000.0, 1.0 / duration);
+		//std::fflush(stdout);
 	}
 	else {
 		// NOTE: Frames are being shown to the screen at an artifical constant rate.
@@ -86,6 +84,10 @@ void update(int ID) {
 }
 
 int main(int argc, char ** argv) {
+	if (argc > 1) {
+		std::cout << argv[1] << " ";
+	}
+
 	// Initial setup
 	glutInit(&argc, argv);
 	my_setup(CANVAS_WIDTH, CANVAS_HEIGHT, "Fog");

@@ -21,7 +21,7 @@ public:
                 );
             }
         }
-        std::cout << "Constructed ViewingPlane with " << m_data.size() << std::endl;
+        //std::cout << "Constructed ViewingPlane with " << m_data.size() << std::endl;
         set_orientation(position, rotation, scaling);
     }
 

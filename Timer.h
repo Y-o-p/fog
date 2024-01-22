@@ -28,7 +28,7 @@ public:
     }
 
     void output_results() const {
-		cout << m_times.size() << endl;
+		// cout << m_times.size() << endl;
 		double total_s = accumulate(m_times.begin(), m_times.end(), 0.0);
 		double total_ms = total_s * 1000.0;
 		double average_frame_time = total_ms / m_times.size();
@@ -37,11 +37,12 @@ public:
 		};
 		double variance = accumulate(m_times.begin(), m_times.end(), 0.0, variance_fun) / (m_times.size() - 1);
 		double average_fps = 1.0 / (average_frame_time / 1000.0);
-		cout << endl;
-		cout << setw(30) << setfill('.') << left << "Total rendering time" << right << total_s << "s" << endl; 
-		cout << setw(30) << setfill('.') << left << "Mean frame time" << right << average_frame_time << "ms" << endl; 
-		cout << setw(30) << setfill('.') << left << "Frame time variance" << right << variance << "ms" << endl; 
-		cout << setw(30) << setfill('.') << left << "Mean FPS" << right << average_fps << "FPS" << endl; 
+		// cout << endl;
+		// cout << setw(30) << setfill('.') << left << "Total rendering time" << right << total_s << "s" << endl; 
+		// cout << setw(30) << setfill('.') << left << "Mean frame time" << right << average_frame_time << "ms" << endl; 
+		// cout << setw(30) << setfill('.') << left << "Frame time variance" << right << variance << "ms" << endl; 
+		// cout << setw(30) << setfill('.') << left << "Mean FPS" << right << average_fps << "FPS" << endl; 
+        cout << average_fps << "\n";
     }
 
 private:
