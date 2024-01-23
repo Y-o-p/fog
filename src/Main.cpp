@@ -18,7 +18,7 @@ static constexpr auto UPDATE_RATE = 1000.0 / FPS;
 static constexpr auto CUBE_SIZE = 60;
 static constexpr auto CAMERA_SCALE = 0.25;
 static constexpr auto BACK_PLANE = 128;
-static constexpr auto SAMPLE_PERIOD = 1.0f;
+static constexpr auto SAMPLE_PERIOD = 2.0f;
 
 using namespace glm;
  
