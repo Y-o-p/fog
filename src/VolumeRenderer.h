@@ -11,7 +11,7 @@ class VolumeRenderer : public Renderer<length> {
 public:
 	VolumeRenderer() {}
 	VolumeRenderer(const ViewingPlane& view) {
-		ShaderProgram shader_program = ShaderProgram("shader.vert", "shader.frag");
+		ShaderProgram shader_program = ShaderProgram("../src/shaders/shader.vert", "../src/shaders/shader.frag");
 		GLuint shader_id = shader_program.get_shader_id();
 
 		glGenVertexArrays(1, &m_vao_id);

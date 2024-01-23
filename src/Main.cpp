@@ -40,6 +40,8 @@ static float rotation_x = 0.0f;
 static float rotation_y = 0.0f;
 static float rotation_z = 0.0f;
 static vec3 light_pos = vec3(0);
+static int frame_number = 0;
+static Timer timer;
 
 void clear_screen() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -57,28 +59,36 @@ void display_func() {
 	renderer.set_light_pos(&light_pos);
 	renderer.set_view(&viewing_plane);
 	renderer.render();
-	glFlush();
-	time_elapsed += UPDATE_RATE / 1000.0;
+	glFinish();
 }
 
 void update(int ID) {	
-	display_func();
-	glutTimerFunc(UPDATE_RATE, update, 0);
+	if (frame_number++ < 60) {
+		timer.start();
+		display_func();
+		timer.end();
+		glutTimerFunc(UPDATE_RATE, update, 0);
+		time_elapsed += UPDATE_RATE / 1000.0;
+	}
+	else {
+		timer.output_results();
+		exit(0);
+	}
 }
 
-void performance_test() {
-	display_func();
-	display_func();
-	glutPostRedisplay();
-	auto timer = Timer();
-	timer.start();
-	for (int i = 0; i < 60; i++) {
-		display_func();
-	}
-	double duration = timer.end();
-	std::cout << "Duration: " << duration << std::endl;
-	timer.output_results(duration, 60);
-}
+// void performance_test() {
+// 	display_func();
+// 	display_func();
+// 	glutPostRedisplay();
+// 	auto timer = Timer();
+// 	timer.start();
+// 	for (int i = 0; i < 60; i++) {
+// 		display_func();
+// 	}
+// 	double duration = timer.end();
+// 	std::cout << "Duration: " << duration << std::endl;
+// 	timer.output_results();
+// }
 
 int main(int argc, char ** argv) {
 	if (argc > 1) {
@@ -103,10 +113,9 @@ int main(int argc, char ** argv) {
 		glm::vec3(20, 45, 0),
 		glm::vec3(CANVAS_WIDTH / 2.0f * CAMERA_SCALE, CANVAS_HEIGHT / 2.0f * CAMERA_SCALE, 1.0f)
 	);
-
-	performance_test();
-
+	display_func();
+	display_func();
 	// Start the main loop
-	//glutMainLoop();
+	glutMainLoop();
 	return 0;
 }
