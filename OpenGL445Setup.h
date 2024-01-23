@@ -43,7 +43,7 @@ void my_setup(int width, int height, char *window_name_str)
 	glutInitContextVersion(4, 3);
 	glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
 	// To get double buffering, uncomment the following line
-	// glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB); 
+	//glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB); 
 	// below DisplayMode code line does single buffering - if above line is uncommented,
 	// this single buffering line will have to be commented out
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);

@@ -9,7 +9,7 @@ using namespace glm;
 // TODO put these definitions in CPP
 class ViewingPlane {
 public:
-    ViewingPlane(int width = 400, int height = 400, int depth = 128, float sample_period = 1.0f, vec3 position = vec3(0), vec3 rotation = vec3(0), vec3 scaling = vec3(1)): 
+    ViewingPlane(int width, int height, int depth, float sample_period, vec3 position = vec3(0), vec3 rotation = vec3(0), vec3 scaling = vec3(1)): 
     m_width(width), m_height(height), m_depth(depth), m_sample_period(sample_period), m_mat(mat4(1)) {
         m_data.resize(m_width * m_height);
         for (int y = 0; y < m_height; y++) {

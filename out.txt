@@ -1,0 +1,10 @@
+256 Samples
+gpu 4232.21
+g++ 0.0877941
+g++O3 1.36368
+g++O2 0.609949
+512 Samples
+gpu Duration: 0.018784
+3194.21
+gpu Duration: 0.013982
+4291.23
