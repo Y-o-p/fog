@@ -32,6 +32,10 @@ inline constexpr size_t cartesian_to_index(ivec3 v, size_t length) {
     return v.z * length * length + v.y * length + v.x;
 }
 
+inline constexpr ivec2 index_to_cartesian(int index, int width, int height) {
+    return ivec2(index % width, index / height);
+}
+
 VOLUME_TEMPLATE
 class Volume {
 public:

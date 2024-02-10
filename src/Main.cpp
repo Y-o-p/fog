@@ -34,6 +34,7 @@ static VolumeRenderer<CUBE_SIZE> renderer;
 static ViewingPlane viewing_plane = ViewingPlane(CANVAS_WIDTH, CANVAS_HEIGHT, BACK_PLANE, SAMPLE_PERIOD);
 #include "OpenGL445Setup.h"
 #include "Timer.h"
+#include <thread>
 
 static float time_elapsed = 0.0f;
 static float rotation_x = 0.0f;
@@ -91,6 +92,7 @@ void update(int ID) {
 // }
 
 int main(int argc, char ** argv) {
+	std::cout << std::thread::hardware_concurrency() << std::endl;
 	if (argc > 1) {
 		std::cout << argv[1] << " ";
 	}

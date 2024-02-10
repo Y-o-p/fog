@@ -2,35 +2,42 @@
 #include <iostream>
 #include <GL/freeglut.h>
 #include <cmath>
+#include <thread>
+#include <vector>
 
 #include "Renderer.h"
 
 using namespace glm;
 
+#define CHUNKS 64
+
 VOLUME_TEMPLATE
 class VolumeRendererCPU : public Renderer<length> {
 public:
     void render() override {
-        //vec3 background_color = normalize(vec3(0, 204, 255));
+        std::fill(m_color_buffer.begin(), m_color_buffer.end(), vec3(0));
         ivec3 canvas_size = m_view->get_size();
-        const std::vector<vec3>& plane = m_view->get_plane();
-        float sample_period = m_view->get_sample_period();
-        vec3 direction = m_view->get_direction();
-        mat4 view_mat = m_view->get_mat();
+        const int CHUNK_WIDTH = canvas_size.x / CHUNKS;
+        const int CHUNK_HEIGHT = canvas_size.y;
+        
+        // Spawn threads to do ray calculations
+        std::thread workers[CHUNKS];
+        for (int i = 0; i < CHUNKS; i++) {
+            ivec2 start = ivec2(i * CHUNK_WIDTH, 0);
+            ivec2 end = ivec2(i * CHUNK_WIDTH + CHUNK_WIDTH, CHUNK_HEIGHT);
+            workers[i] = std::thread([=] {draw_chunk(start, end);});
+        }
 
+        // Wait for threads to finish
+        for (int i = 0; i < CHUNKS; i++) {
+            workers[i].join();
+        }
+
+        // OpenGL call
         glBegin(GL_POINTS);
         for (int y = 0; y < canvas_size.y; y++) {
-            for (int x = 0; x < canvas_size.x; x++) {
-                auto index = y * canvas_size.x + x;
-                vec4 point = view_mat * vec4(plane[index], 1.0f);
-                float ray_value = calculate_ray(
-                    point,
-                    direction,
-                    canvas_size.z,
-                    sample_period,
-                    *m_light_pos
-                );
-                vec3 color = vec3(ray_value);
+            for (int x = 0; x < canvas_size.y; x++) {
+                vec3 color = m_color_buffer[y * canvas_size.x + x];
                 glColor3f(color.x, color.y, color.z);
                 glVertex2i(x, y);
             }
@@ -44,6 +51,7 @@ public:
 
     void set_view(const ViewingPlane * view) override {
         m_view = view;
+        m_color_buffer.resize(view->get_size().x * view->get_size().y);
     }
 
     void set_light_pos(const vec3 * pos) override {
@@ -51,6 +59,29 @@ public:
     }
 
 private:
+    constexpr void draw_chunk(ivec2 pos_a, ivec2 pos_b) {
+        ivec3 canvas_size = m_view->get_size();
+        const std::vector<vec3>& plane = m_view->get_plane();
+        float sample_period = m_view->get_sample_period();
+        vec3 direction = m_view->get_direction();
+        mat4 view_mat = m_view->get_mat();
+        for (int y = pos_a.y; y < pos_b.y; y++) {
+            for (int x = pos_a.x; x < pos_b.x; x++) {
+                auto index = y * canvas_size.x + x;
+                vec4 point = view_mat * vec4(plane[index], 1.0f);
+                float ray_value = calculate_ray(
+                    point,
+                    direction,
+                    canvas_size.z,
+                    sample_period,
+                    *m_light_pos
+                );
+                vec3 color = vec3(ray_value);
+                m_color_buffer[index] = color;
+            }
+        }
+    }
+
     constexpr void get_barycentric_weights(vec3 pos, ivec3& b, ivec3& c, vec4& weights) {
         pos -= floor(pos);
         ivec3 a = ivec3(0);
@@ -125,4 +156,5 @@ private:
     const Volume<length> * m_volume;
     const ViewingPlane * m_view;
     const vec3 * m_light_pos;
+    std::vector<vec3> m_color_buffer;
 };
